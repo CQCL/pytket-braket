@@ -30,6 +30,19 @@ from typing import (
     TYPE_CHECKING,
 )
 from uuid import uuid4
+import braket  # type: ignore
+from braket.aws import AwsDevice, AwsSession  # type: ignore
+from braket.aws.aws_device import AwsDeviceType  # type: ignore
+from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
+import braket.circuits  # type: ignore
+from braket.circuits.observable import Observable  # type: ignore
+from braket.circuits.qubit_set import QubitSet  # type: ignore
+from braket.circuits.result_type import ResultType  # type: ignore
+from braket.device_schema import DeviceActionType  # type: ignore
+from braket.devices import LocalSimulator  # type: ignore
+from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
+import boto3  # type: ignore
+import numpy as np
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
 from pytket.backends.backendinfo import BackendInfo
@@ -73,19 +86,6 @@ from pytket.placement import NoiseAwarePlacement  # type: ignore
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.outcomearray import OutcomeArray
-import braket  # type: ignore
-from braket.aws import AwsDevice, AwsSession  # type: ignore
-from braket.aws.aws_device import AwsDeviceType  # type: ignore
-from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
-import braket.circuits  # type: ignore
-from braket.circuits.observable import Observable  # type: ignore
-from braket.circuits.qubit_set import QubitSet  # type: ignore
-from braket.circuits.result_type import ResultType  # type: ignore
-from braket.device_schema import DeviceActionType  # type: ignore
-from braket.devices import LocalSimulator  # type: ignore
-from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
-import boto3  # type: ignore
-import numpy as np
 
 from .config import BraketConfig
 

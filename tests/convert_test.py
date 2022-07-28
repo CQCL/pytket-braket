@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 from pytket.extensions.braket import braket_to_tk, tk_to_braket
 from pytket.circuit import Circuit, OpType  # type: ignore
-import pytest
-
 
 def test_convert() -> None:
     c = Circuit(3)

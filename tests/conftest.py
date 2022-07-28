@@ -17,8 +17,8 @@ import os
 import pytest
 import boto3
 from braket.aws.aws_session import AwsSession  # type: ignore
-from pytket.extensions.braket import BraketBackend
 from _pytest.fixtures import SubRequest
+from pytket.extensions.braket import BraketBackend
 
 
 def get_authenticated_aws_session(region: Optional[str] = None) -> Optional[AwsSession]:
