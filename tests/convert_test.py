@@ -16,6 +16,7 @@ import pytest
 from pytket.extensions.braket import braket_to_tk, tk_to_braket
 from pytket.circuit import Circuit, OpType  # type: ignore
 
+
 def test_convert() -> None:
     c = Circuit(3)
     c.add_gate(OpType.CCX, [0, 1, 2])
