@@ -17,8 +17,8 @@ import os
 import pytest
 import boto3
 from braket.aws.aws_session import AwsSession  # type: ignore
-from pytket.extensions.braket import BraketBackend
 from _pytest.fixtures import SubRequest
+from pytket.extensions.braket import BraketBackend
 
 
 def get_authenticated_aws_session(region: Optional[str] = None) -> Optional[AwsSession]:
@@ -33,7 +33,7 @@ def get_authenticated_aws_session(region: Optional[str] = None) -> Optional[AwsS
         # Note: this session fixture should be used when creating backends for tests
         #       where PYTKET_RUN_REMOTE_TESTS is true
         region_name = region or os.getenv("PYTKET_REMOTE_BRAKET_REGION")
-        boto_session = boto3.Session(
+        boto_session = boto3.Session(  # type: ignore
             aws_access_key_id=os.getenv("PYTKET_REMOTE_BRAKET_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("PYTKET_REMOTE_BRAKET_ACCESS_KEY_SECRET"),
             region_name=region_name,

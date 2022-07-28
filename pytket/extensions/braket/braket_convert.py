@@ -27,9 +27,9 @@ from typing import (
     TypeVar,
     TYPE_CHECKING,
 )
-from pytket.circuit import Circuit, OpType  # type: ignore
-from braket.circuits import Circuit as BK_Circuit  # type: ignore
 from numpy import pi
+from braket.circuits import Circuit as BK_Circuit  # type: ignore
+from pytket.circuit import Circuit, OpType  # type: ignore
 
 if TYPE_CHECKING:
     from pytket.circuit import Node  # type: ignore
