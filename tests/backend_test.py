@@ -174,6 +174,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     b.cancel(h)
 
 
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [
@@ -217,6 +218,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     b.cancel(h)
 
 
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [
@@ -542,6 +544,7 @@ def test_multiple_indices() -> None:
     assert all(readout[0] == readout[1] for readout in readouts)
 
 
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [
