@@ -313,6 +313,15 @@ class BraketBackend(Backend):
             self._device = LocalSimulator(backend=local_device)
             self._device_type = _DeviceType.LOCAL
         else:
+            print(
+                "ARN =",
+                "arn:aws:braket:"
+                + region
+                + "::"
+                + "/".join(
+                    ["device", device_type, provider, device],
+                ),
+            )
             self._device = AwsDevice(
                 "arn:aws:braket:"
                 + region
