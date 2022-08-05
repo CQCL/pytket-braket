@@ -180,6 +180,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
             "device_type": "qpu",
             "provider": "rigetti",
             "device": "Aspen-11",
+            "auth_region": "us-west-1",
         }
     ],
     indirect=True,
@@ -222,6 +223,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
             "device_type": "qpu",
             "provider": "rigetti",
             "device": "Aspen-11",
+            "auth_region": "us-west-1",
         }
     ],
     indirect=True,
@@ -545,6 +547,7 @@ def test_multiple_indices() -> None:
             "device_type": "qpu",
             "provider": "rigetti",
             "device": "Aspen-11",
+            "auth_region": "us-west-1",
         }
     ],
     indirect=True,
