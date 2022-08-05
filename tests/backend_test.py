@@ -72,6 +72,7 @@ def test_simulator(authenticated_braket_backend: BraketBackend) -> None:
     assert readout[1] == readout[2]
 
 
+@pytest.mark.skip(reason="https://github.com/CQCL/pytket-braket/issues/7")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
