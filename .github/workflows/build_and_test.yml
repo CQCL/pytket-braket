@@ -9,6 +9,7 @@ on:
     branches:
       - develop
       - 'wheel/**'
+      - debug-fixtests.1
   release:
     types:
       - created
@@ -26,7 +27,7 @@ jobs:
     name: Braket - Build and test module
     strategy:
       matrix:
-        os: ['ubuntu-20.04', 'macos-11', 'windows-2019']
+        os: ['ubuntu-20.04']
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -83,70 +84,70 @@ jobs:
       run: |
         ./.github/workflows/docs/check-build-docs
 
-  publish_to_pypi:
-    name: Publish to pypi
-    if: github.event_name == 'release'
-    needs: braket-checks
-    runs-on: ubuntu-20.04
-    steps:
-    - name: Download all wheels
-      uses: actions/download-artifact@v3
-      with:
-        path: wheelhouse
-    - name: Put them all in the dist folder
-      run: |
-        mkdir dist
-        for w in `find wheelhouse/ -type f -name "*.whl"` ; do cp $w dist/ ; done
-    - name: Publish wheels
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_PYTKET_BRAKET_API_TOKEN }}
-        verbose: true
+  # publish_to_pypi:
+  #   name: Publish to pypi
+  #   if: github.event_name == 'release'
+  #   needs: braket-checks
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - name: Download all wheels
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       path: wheelhouse
+  #   - name: Put them all in the dist folder
+  #     run: |
+  #       mkdir dist
+  #       for w in `find wheelhouse/ -type f -name "*.whl"` ; do cp $w dist/ ; done
+  #   - name: Publish wheels
+  #     uses: pypa/gh-action-pypi-publish@release/v1
+  #     with:
+  #       user: __token__
+  #       password: ${{ secrets.PYPI_PYTKET_BRAKET_API_TOKEN }}
+  #       verbose: true
 
-  docs:
-    name: Build and publish docs
-    if: github.event_name == 'release'
-    needs: publish_to_pypi
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: '0'
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    - name: Download all wheels
-      uses: actions/download-artifact@v3
-      with:
-        path: wheelhouse
-    - name: Install pip, wheel
-      run: pip install -U pip wheel
-    - name: Install extensions
-      run: for w in `find wheelhouse/ -type f -name "*.whl"` ; do pip install $w ; done
-    - name: Install docs dependencies
-      run: |
-        pip install -r .github/workflows/docs/requirements.txt
-    - name: Build docs
-      timeout-minutes: 20
-      run: |
-        cd .github/workflows/docs
-        mkdir extensions
-        ./build-docs -d ${GITHUB_WORKSPACE}/.github/workflows/docs/extensions
-    - name: Configure git
-      run: |
-        git config --global user.email "tket-bot@cambridgequantum.com"
-        git config --global user.name  "«$GITHUB_WORKFLOW» github action"
-    - name: Check out gh-pages branch
-      run: git checkout gh-pages
-    - name: Remove old docs
-      run: git rm -r --ignore-unmatch docs/api
-    - name: Add generated docs to repository
-      run: |
-        mkdir -p docs
-        mv .github/workflows/docs/extensions docs/api
-        git add -f docs/api
-        git commit --allow-empty -m "Add generated documentation."
-    - name: Publish docs
-      run:  git push origin gh-pages:gh-pages
+  # docs:
+  #   name: Build and publish docs
+  #   if: github.event_name == 'release'
+  #   needs: publish_to_pypi
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       fetch-depth: '0'
+  #   - name: Set up Python 3.9
+  #     uses: actions/setup-python@v3
+  #     with:
+  #       python-version: '3.9'
+  #   - name: Download all wheels
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       path: wheelhouse
+  #   - name: Install pip, wheel
+  #     run: pip install -U pip wheel
+  #   - name: Install extensions
+  #     run: for w in `find wheelhouse/ -type f -name "*.whl"` ; do pip install $w ; done
+  #   - name: Install docs dependencies
+  #     run: |
+  #       pip install -r .github/workflows/docs/requirements.txt
+  #   - name: Build docs
+  #     timeout-minutes: 20
+  #     run: |
+  #       cd .github/workflows/docs
+  #       mkdir extensions
+  #       ./build-docs -d ${GITHUB_WORKSPACE}/.github/workflows/docs/extensions
+  #   - name: Configure git
+  #     run: |
+  #       git config --global user.email "tket-bot@cambridgequantum.com"
+  #       git config --global user.name  "«$GITHUB_WORKFLOW» github action"
+  #   - name: Check out gh-pages branch
+  #     run: git checkout gh-pages
+  #   - name: Remove old docs
+  #     run: git rm -r --ignore-unmatch docs/api
+  #   - name: Add generated docs to repository
+  #     run: |
+  #       mkdir -p docs
+  #       mv .github/workflows/docs/extensions docs/api
+  #       git add -f docs/api
+  #       git commit --allow-empty -m "Add generated documentation."
+  #   - name: Publish docs
+  #     run:  git push origin gh-pages:gh-pages
