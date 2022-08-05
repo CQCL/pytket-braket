@@ -449,7 +449,7 @@ def test_default_pass() -> None:
     n_bits=strategies.integers(min_value=0, max_value=10),
 )
 @settings(deadline=None)
-def test_shots_bits_edgecases(n_shots, n_bits) -> None:
+def test_shots_bits_edgecases(n_shots: int, n_bits: int) -> None:
     braket_backend = BraketBackend(local=True)
     c = Circuit(n_bits, n_bits)
     c.measure_all()
