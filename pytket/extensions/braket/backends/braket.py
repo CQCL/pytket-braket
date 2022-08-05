@@ -275,6 +275,7 @@ class BraketBackend(Backend):
             "braket_sv" (default) or "braket_dm".
         :param device: device name from device ARN (e.g. "ionQdevice", "Aspen-8", ...),
             default: "sv1"
+        :param region: region from device ARN, default: ""
         :param s3_bucket: name of S3 bucket to store results
         :param s3_folder: name of folder ("key") in S3 bucket to store results in
         :param device_type: device type from device ARN (e.g. "qpu"),
