@@ -73,6 +73,7 @@ def fixture_authenticated_braket_backend(
         )
         auth_region = request.param.get("auth_region") or region
         authenticated_aws_session = get_authenticated_aws_session(region=auth_region)
+        print("region =", region)
         backend = BraketBackend(
             device_type=device_type,
             provider=provider,
