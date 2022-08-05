@@ -22,6 +22,14 @@ from pytket.extensions.braket import BraketBackend
 
 
 def get_authenticated_aws_session(region: Optional[str] = None) -> Optional[AwsSession]:
+    print("get_authenticated_aws_session: region =", region)
+    print(
+        "os.getenv('PYTKET_RUN_REMOTE_TESTS') =", os.getenv("PYTKET_RUN_REMOTE_TESTS")
+    )
+    print(
+        "os.getenv('PYTKET_REMOTE_BRAKET_REGION') =",
+        os.getenv("PYTKET_REMOTE_BRAKET_REGION"),
+    )
     if os.getenv("PYTKET_RUN_REMOTE_TESTS") is not None:
         # Authenticated AwsSession used in the authenticated_braket_backend
         # The values for the access key id and secret access key are taken from the
