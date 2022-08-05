@@ -16,7 +16,7 @@ import json
 from collections import Counter
 from typing import cast
 import os
-from hypothesis import given, strategies
+from hypothesis import given, settings, strategies
 import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
@@ -445,6 +445,7 @@ def test_default_pass() -> None:
     n_shots=strategies.integers(min_value=1, max_value=10),  # type: ignore
     n_bits=strategies.integers(min_value=0, max_value=10),
 )
+@settings(deadline=None)
 def test_shots_bits_edgecases(n_shots, n_bits) -> None:
     braket_backend = BraketBackend(local=True)
     c = Circuit(n_bits, n_bits)
