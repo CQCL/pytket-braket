@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+0.22.0 (unreleased)
+-------------------
+
+* Fix tracking of qubit indices on devices with non-contiguous qubit sets.
+
 0.21.0 (July 2022)
 ------------------
 
