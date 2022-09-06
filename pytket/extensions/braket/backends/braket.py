@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import warnings
 from enum import Enum
 import time
 from typing import (
@@ -211,6 +212,15 @@ def _get_result(
     want_dm: bool,
     ppcirc: Optional[Circuit] = None,
 ) -> Dict[str, BackendResult]:
+    """Get a result from a completed task.
+
+    :param completed_task: braket task
+    :param target_qubits: list of braket qubit ids
+    :param measures: map from measured braket qubit ids to original circuit bit indices
+    :param want_state: whether we want a statevector result
+    :paran want_dm: whether we want a density-matrix result
+    :param ppcirc: classical postprocessing circuit, if any
+    """
     result = completed_task.result()
     kwargs = {}
     if want_state or want_dm:
@@ -228,8 +238,10 @@ def _get_result(
             else:
                 kwargs["density_matrix"] = m
     else:
-        qubits_index = [measures[i] for i in target_qubits if i in measures]
-        measurements = result.measurements[:, qubits_index]
+        qubit_index = [0] * len(measures)
+        for q, b in measures.items():
+            qubit_index[b] = q
+        measurements = result.measurements[:, qubit_index]
         kwargs["shots"] = OutcomeArray.from_readouts(measurements)
         kwargs["ppcirc"] = ppcirc
     return {"result": BackendResult(**kwargs)}
@@ -322,7 +334,20 @@ class BraketBackend(Backend):
                 ),
                 aws_session=self._aws_session,
             )
-            self._s3_dest = (s3_bucket, s3_folder)
+            # self._s3_dest must be of type Optional[Tuple[str, str]]
+            if s3_bucket is None or s3_folder is None:
+                self._s3_dest = None
+                if s3_bucket is None and s3_folder is not None:
+                    warnings.warn(
+                        "'s3_bucket' is missing, use the default s3 destination."
+                    )
+                elif s3_bucket is not None and s3_folder is None:
+                    warnings.warn(
+                        "'s3_folder' is missing, use the default s3 destination."
+                    )
+            else:
+                self._s3_dest = (s3_bucket, s3_folder)
+
             aws_device_type = self._device.type
             if aws_device_type == AwsDeviceType.SIMULATOR:
                 self._device_type = _DeviceType.SIMULATOR
@@ -391,7 +416,11 @@ class BraketBackend(Backend):
         )
 
         paradigm = props["paradigm"]
-        n_qubits = paradigm["qubitCount"]
+        n_qubits = len(self._all_qubits)
+
+        self._supports_client_qubit_mapping = (
+            self._device_type == _DeviceType.QPU
+        ) and device_info["disabledQubitRewiringSupported"]
 
         self._req_preds = [
             NoClassicalControlPredicate(),
@@ -462,29 +491,17 @@ class BraketBackend(Backend):
                 )
                 # each connectivity graph key will be an int
                 # connectivity_graph values will be lists
-                qubit_list = [
-                    [*connectivity_graph.keys()],
-                    *connectivity_graph.values(),
-                ]
-                # summing lists will flatten them
-                # example [[0,1], [0,2]] would be [0,1,0,2] when summed
-                # returns unique ordered list since taking set of sum
-                all_qubits = list(set(sum(qubit_list, [])))
-                if n_qubits < len(all_qubits):
-                    # This can happen, at least on rigetti devices, and causes errors.
-                    # As a kludgy workaround, remove some qubits from the architecture.
-                    all_qubits = all_qubits[: (n_qubits - len(all_qubits))]
-                    connectivity_graph = dict(
-                        (k, [v for v in l if v in all_qubits])
-                        for k, l in connectivity_graph.items()
-                        if k in all_qubits
-                    )
+                all_qubits_set = set()
+                for k, v in connectivity_graph.items():
+                    all_qubits_set.add(k)
+                    all_qubits_set.update(v)
+                all_qubits = list(all_qubits_set)
         else:
             all_qubits = list(range(n_qubits))
 
         if connectivity_graph is None:
             connectivity_graph = dict(
-                (k, [v for v in range(n_qubits) if v != k]) for k in range(n_qubits)
+                (k, [v for v in all_qubits if v != k]) for k in all_qubits
             )
         arch = Architecture([(k, v) for k, l in connectivity_graph.items() for v in l])
         return arch, all_qubits
@@ -636,15 +653,20 @@ class BraketBackend(Backend):
         if self._device_type == _DeviceType.LOCAL:
             return self._device.run(bkcirc, shots=n_shots, **kwargs)
         else:
-            return self._device.run(bkcirc, self._s3_dest, shots=n_shots, **kwargs)
+            return self._device.run(
+                bkcirc,
+                self._s3_dest,
+                shots=n_shots,
+                disable_qubit_rewiring=self._supports_client_qubit_mapping,
+                **kwargs,
+            )
 
     def _to_bkcirc(
         self, circuit: Circuit
-    ) -> Tuple[braket.circuits.Circuit, Dict[int, int]]:
-        if self._device_type == _DeviceType.QPU:
-            return tk_to_braket(circuit, self._all_qubits)
-        else:
-            return tk_to_braket(circuit)
+    ) -> Tuple[braket.circuits.Circuit, List[int], Dict[int, int]]:
+        return tk_to_braket(
+            circuit, mapped_qubits=(self._device_type == _DeviceType.QPU)
+        )
 
     def process_circuits(
         self,
@@ -686,18 +708,12 @@ class BraketBackend(Backend):
         for circ, n_shots in zip(circuits, n_shots_list):
             want_state = (n_shots == 0) and self.supports_state
             want_dm = (n_shots == 0) and self.supports_density_matrix
-            problem_qubits = list(range(circ.n_qubits))
-            device_qubits = list(range(len(self._backend_info.nodes)))
-            target_qubits = [device_qubits.index(x) for x in problem_qubits]
             if postprocess:
                 c0, ppcirc = prepare_circuit(circ, allow_classical=False)
                 ppcirc_rep = ppcirc.to_dict()
             else:
                 c0, ppcirc, ppcirc_rep = circ, None, None
-            bkcirc, measures = self._to_bkcirc(c0)
-            # maps to index of measured qubits in the circuit
-            # this is necessary because qubit number doesn't map to index for Rigetti
-            measures = {k: self._all_qubits.index(v) for k, v in measures.items()}
+            bkcirc, target_qubits, measures = self._to_bkcirc(c0)
             if want_state:
                 bkcirc.add_result_type(ResultType.StateVector())
             if want_dm:
@@ -767,7 +783,7 @@ class BraketBackend(Backend):
                 _get_result(
                     task,
                     json.loads(target_qubits),
-                    dict(json.loads((measures))),
+                    dict(json.loads(measures)),
                     want_state,
                     want_dm,
                     ppcirc,
@@ -973,7 +989,7 @@ class BraketBackend(Backend):
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
-        bkcirc, _ = self._to_bkcirc(state_circuit)
+        bkcirc, _target_qubits, _measures = self._to_bkcirc(state_circuit)
         observable, qbs = _obs_from_qps(state_circuit, pauli)
         return self._get_expectation_value(bkcirc, observable, qbs, n_shots, **kwargs)
 
@@ -997,7 +1013,7 @@ class BraketBackend(Backend):
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
-        bkcirc, _ = self._to_bkcirc(state_circuit)
+        bkcirc, _target_qubits, _measures = self._to_bkcirc(state_circuit)
         observable = _obs_from_qpo(operator, state_circuit.n_qubits)
         return self._get_expectation_value(
             bkcirc, observable, bkcirc.qubits, n_shots, **kwargs
@@ -1023,7 +1039,7 @@ class BraketBackend(Backend):
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
-        bkcirc, _ = self._to_bkcirc(state_circuit)
+        bkcirc, _target_qubits, _measures = self._to_bkcirc(state_circuit)
         observable, qbs = _obs_from_qps(state_circuit, pauli)
         return self._get_variance(bkcirc, observable, qbs, n_shots, **kwargs)
 
@@ -1047,7 +1063,7 @@ class BraketBackend(Backend):
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
-        bkcirc, _ = self._to_bkcirc(state_circuit)
+        bkcirc, _target_qubits, _measures = self._to_bkcirc(state_circuit)
         observable = _obs_from_qpo(operator, state_circuit.n_qubits)
         return self._get_variance(bkcirc, observable, bkcirc.qubits, n_shots, **kwargs)
 
@@ -1089,7 +1105,7 @@ class BraketBackend(Backend):
             )
         if valid_check:
             self._check_all_circuits([circuit], nomeasure_warn=False)
-        bkcirc, _ = self._to_bkcirc(circuit)
+        bkcirc, _target_qubits, _measures = self._to_bkcirc(circuit)
         restype = ResultType.Probability(target=qubits)
         bkcirc.add_result_type(restype)
         task = self._run(bkcirc, n_shots=n_shots, **kwargs)
@@ -1116,7 +1132,7 @@ class BraketBackend(Backend):
             raise RuntimeError("Backend does not support amplitude")
         if valid_check:
             self._check_all_circuits([circuit], nomeasure_warn=False)
-        bkcirc, _ = self._to_bkcirc(circuit)
+        bkcirc, _target_qubits, _measures = self._to_bkcirc(circuit)
         restype = ResultType.Amplitude(states)
         bkcirc.add_result_type(restype)
         task = self._run(bkcirc, n_shots=0, **kwargs)
