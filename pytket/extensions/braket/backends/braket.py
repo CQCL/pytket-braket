@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+import warnings
 from enum import Enum
 import time
 from typing import (
@@ -333,7 +334,20 @@ class BraketBackend(Backend):
                 ),
                 aws_session=self._aws_session,
             )
-            self._s3_dest = (s3_bucket, s3_folder)
+            # self._s3_dest must be of type Optional[Tuple[str, str]]
+            if s3_bucket is None or s3_folder is None:
+                self._s3_dest = None
+                if s3_bucket is None and s3_folder is not None:
+                    warnings.warn(
+                        "'s3_bucket' is missing, use the default s3 destination."
+                    )
+                elif s3_bucket is not None and s3_folder is None:
+                    warnings.warn(
+                        "'s3_folder' is missing, use the default s3 destination."
+                    )
+            else:
+                self._s3_dest = (s3_bucket, s3_folder)
+
             aws_device_type = self._device.type
             if aws_device_type == AwsDeviceType.SIMULATOR:
                 self._device_type = _DeviceType.SIMULATOR
