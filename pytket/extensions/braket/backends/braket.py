@@ -418,8 +418,9 @@ class BraketBackend(Backend):
         paradigm = props["paradigm"]
         n_qubits = len(self._all_qubits)
 
-        # TODO Is there a programmatic way to discover this (except trial and error)?
-        self._supports_client_qubit_mapping = provider == "rigetti"
+        self._supports_client_qubit_mapping = (
+            self._device_type == _DeviceType.QPU
+        ) and device_info["disabledQubitRewiringSupported"]
 
         self._req_preds = [
             NoClassicalControlPredicate(),
