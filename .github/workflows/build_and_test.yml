@@ -40,6 +40,7 @@ jobs:
         python-version: '3.8'
     - name: Build and test (3.8)
       if: github.event_name == 'push'
+      shell: bash
       run: |
         ./.github/workflows/build-test nomypy
     - name: Set up Python 3.9
@@ -55,6 +56,7 @@ jobs:
         PYTKET_RUN_REMOTE_TESTS: 1
     - name: Build and test including remote checks (3.9) nomypy
       if:  (matrix.os != 'macos-11') && ((github.event_name == 'pull_request' &&  github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel'))    
+      shell: bash
       run: |
         ./.github/workflows/build-test nomypy
       env:
@@ -66,6 +68,7 @@ jobs:
         python-version: '3.10'
     - name: Build and test (3.10)
       if: github.event_name == 'push' || github.event_name == 'pull_request'
+      shell: bash
       run: |
         ./.github/workflows/build-test nomypy
     - uses: actions/upload-artifact@v3
@@ -73,6 +76,15 @@ jobs:
       with:
         name: artefacts
         path: wheelhouse/
+    - name: Install docs dependencies
+      if:  (matrix.os == 'ubuntu-20.04') && (github.event_name == 'pull_request')
+      run: |
+        pip install -r .github/workflows/docs/requirements.txt
+    - name: Build docs
+      if:  (matrix.os == 'ubuntu-20.04') && (github.event_name == 'pull_request')
+      timeout-minutes: 20
+      run: |
+        ./.github/workflows/docs/check-build-docs
 
   publish_to_pypi:
     name: Publish to pypi
@@ -124,7 +136,7 @@ jobs:
       run: |
         cd .github/workflows/docs
         mkdir extensions
-        ./build-docs -a -i -d ${GITHUB_WORKSPACE}/.github/workflows/docs/extensions
+        ./build-docs -d ${GITHUB_WORKSPACE}/.github/workflows/docs/extensions
     - name: Configure git
       run: |
         git config --global user.email "tket-bot@cambridgequantum.com"

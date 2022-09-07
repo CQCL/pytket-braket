@@ -20,51 +20,41 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Iterable,
     List,
-    Optional,
     Tuple,
     TypeVar,
     TYPE_CHECKING,
 )
 from numpy import pi
 from braket.circuits import Circuit as BK_Circuit  # type: ignore
-from pytket.circuit import Circuit, OpType  # type: ignore
+from pytket.circuit import Circuit, OpType, Qubit  # type: ignore
 
 if TYPE_CHECKING:
     from pytket.circuit import Node  # type: ignore
 
 
 def tk_to_braket(
-    tkcirc: Circuit, allqbs: Optional[Iterable[int]] = None
-) -> Tuple[BK_Circuit, Dict[int, int]]:
+    tkcirc: Circuit, mapped_qubits: bool = False
+) -> Tuple[BK_Circuit, List[int], Dict[int, int]]:
     """
     Convert a tket :py:class:`Circuit` to a braket circuit.
 
-    If `allqbs` is provided then `tkcirc` must be a circuit having a single
-    one-dimensional register of qubits.
-
-    If `allqbs` is not provided then it is taken to be the qubit set of `tkcirc`.
-
-    The resulting circuit will begin with an identity gate on all qubits in `allqbs`.
-    This is to work around a quirk in braket where circuits whose qubit set contains
-    gaps are rejected.
-
     :param tkcirc: circuit to be converted
-    :param allqbs: superset of indices of tkcirc qubits, if those have been mapped to a
-        braked QPU device
-
-    :returns: circuit converted to braket, and dictionary of measurements (from bit
-        indices to qubit indices)
+    :param mapped_qubits: if True, `tkcirc` must have a single one-dimensional qubit
+        register; the indices of the qubits in that register correspond directly to the
+        qubit identifiers in the braket circuit
+    :returns: circuit converted to braket; list of braket qubit ids corresponding in
+        order of corresponding positions in tkcirc.qubits; (partial) map from braket
+        qubit ids to corresponding pytket bit indices holding measurement results
     """
     bkcirc = BK_Circuit()
-    mapped_qubits = allqbs is not None
-    if not mapped_qubits:
-        allqbs = range(tkcirc.n_qubits)
-    assert allqbs is not None
-    for qb in allqbs:
-        bkcirc.i(qb)
+    target_qubits = []
+    for i, qb in enumerate(tkcirc.qubits):
+        bkq = qb.index[0] if mapped_qubits else i
+        target_qubits.append(bkq)
     measures = {}
+    # Add no-ops on all qubits to ensure that even unused qubits are included in bkcirc:
+    bkcirc.i(target_qubits)
     # Add commands
     for cmd in tkcirc.get_commands():
         qbs = [
@@ -133,10 +123,10 @@ def tk_to_braket(
             bkcirc.zz(*qbs, params[0] * pi)
         elif optype == OpType.Measure:
             # Not wanted by braket, but must be tracked for final conversion of results.
-            measures[cbs[0]] = qbs[0]
+            measures[qbs[0]] = cbs[0]
         else:
             raise NotImplementedError(f"Cannot convert {op.get_name()} to braket")
-    return (bkcirc, measures)
+    return (bkcirc, target_qubits, measures)
 
 
 def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:
@@ -147,11 +137,12 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:
 
     :returns: circuit converted to tket
     """
-    n_qbs = len(bkcirc.qubits)
-    tkcirc = Circuit(n_qbs)
+    tkcirc = Circuit()
+    for qb in bkcirc.qubits:
+        tkcirc.add_qubit(Qubit("q", int(qb)))
     for instr in bkcirc.instructions:
         op = instr.operator
-        qbs = [bkcirc.qubits.index(qb) for qb in instr.target]
+        qbs = [int(qb) for qb in instr.target]
         opname = op.name
         if opname == "CCNot":
             tkcirc.add_gate(OpType.CCX, qbs)

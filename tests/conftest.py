@@ -61,19 +61,26 @@ def fixture_authenticated_braket_backend(
             aws_session=authenticated_aws_session,
         )
     else:
-        authenticated_aws_session = get_authenticated_aws_session(
-            region=request.param.get("region")
+        device_type = request.param.get("device_type")
+        provider = request.param.get("provider")
+        device = request.param.get("device")
+        region = request.param.get("region") or ""
+        s3_bucket = request.param.get("s3_bucket") or os.getenv(
+            "PYTKET_REMOTE_BRAKET_BUCKET"
         )
-        if not "s3_bucket" in request.param or not "s3_folder" in request.param:
-            backend = BraketBackend(
-                **request.param,
-                s3_bucket=os.getenv("PYTKET_REMOTE_BRAKET_BUCKET"),
-                s3_folder=os.getenv("PYTKET_REMOTE_BRAKET_FOLDER"),
-                aws_session=authenticated_aws_session,
-            )
-        else:
-            backend = BraketBackend(
-                **request.param, aws_session=authenticated_aws_session
-            )
+        s3_folder = request.param.get("s3_folder") or os.getenv(
+            "PYTKET_REMOTE_BRAKET_FOLDER"
+        )
+        auth_region = request.param.get("auth_region") or region
+        authenticated_aws_session = get_authenticated_aws_session(region=auth_region)
+        backend = BraketBackend(
+            device_type=device_type,
+            provider=provider,
+            device=device,
+            region=region,
+            s3_bucket=s3_bucket,
+            s3_folder=s3_folder,
+            aws_session=authenticated_aws_session,
+        )
 
     return backend

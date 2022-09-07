@@ -16,7 +16,7 @@ import json
 from collections import Counter
 from typing import cast
 import os
-from hypothesis import given, strategies
+from hypothesis import given, settings, strategies
 import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
@@ -33,9 +33,7 @@ from pytket.utils.operators import QubitPauliOperator
 # https://github.com/aws/amazon-braket-sdk-python
 # Otherwise, all tests are run on a local simulator.
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
-skip_remote_tests_rigetti: bool = True
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of AWS storage)"
-REASONRIGETTI = "rigetti currently offline"
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -74,6 +72,7 @@ def test_simulator(authenticated_braket_backend: BraketBackend) -> None:
     assert readout[1] == readout[2]
 
 
+@pytest.mark.skip(reason="https://github.com/CQCL/pytket-braket/issues/7")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
@@ -175,14 +174,14 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     b.cancel(h)
 
 
-@pytest.mark.skipif(skip_remote_tests_rigetti, reason=REASONRIGETTI)
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-1",
+            "device": "Aspen-M-2",
             "region": "us-west-1",
         }
     ],
@@ -219,14 +218,14 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     b.cancel(h)
 
 
-@pytest.mark.skipif(skip_remote_tests_rigetti, reason=REASONRIGETTI)
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-1",
+            "device": "Aspen-M-2",
             "region": "us-west-1",
         }
     ],
@@ -449,7 +448,8 @@ def test_default_pass() -> None:
     n_shots=strategies.integers(min_value=1, max_value=10),  # type: ignore
     n_bits=strategies.integers(min_value=0, max_value=10),
 )
-def test_shots_bits_edgecases(n_shots, n_bits) -> None:
+@settings(deadline=None)
+def test_shots_bits_edgecases(n_shots: int, n_bits: int) -> None:
     braket_backend = BraketBackend(local=True)
     c = Circuit(n_bits, n_bits)
     c.measure_all()
@@ -544,14 +544,14 @@ def test_multiple_indices() -> None:
     assert all(readout[0] == readout[1] for readout in readouts)
 
 
-@pytest.mark.skipif(skip_remote_tests_rigetti, reason=REASONRIGETTI)
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-1",
+            "device": "Aspen-M-2",
             "region": "us-west-1",
         }
     ],
