@@ -1,11 +1,12 @@
 Changelog
 ~~~~~~~~~
 
-0.22.0 (unreleased)
--------------------
+0.22.0 (September 2022)
+-----------------------
 
 * Fix tracking of qubit indices on devices with non-contiguous qubit sets.
 * Update dependencies.
+* Updated pytket version requirement to 1.6.
 
 0.21.0 (July 2022)
 ------------------
