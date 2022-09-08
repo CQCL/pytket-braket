@@ -57,6 +57,14 @@ def test_convert_qubit_order() -> None:
     assert c.get_commands() == c1.get_commands()
 
 
+def test_convert_barriers() -> None:
+    c = Circuit(1).H(0).add_barrier([0])
+    bkc, _target_qubits, _measures = tk_to_braket(c)
+    c1 = braket_to_tk(bkc)
+    new_cmds = c1.get_commands()
+    assert len(new_cmds) == 1
+    assert c.get_commands()[0] == new_cmds[0]
+
 def test_unsupported() -> None:
     c = Circuit(1).add_gate(OpType.U3, [0.1, 0.2, 0.3], [0])
     pytest.raises(NotImplementedError, tk_to_braket, c)
