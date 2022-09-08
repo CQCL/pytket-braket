@@ -65,6 +65,7 @@ def test_convert_barriers() -> None:
     assert len(new_cmds) == 1
     assert c.get_commands()[0] == new_cmds[0]
 
+
 def test_unsupported() -> None:
     c = Circuit(1).add_gate(OpType.U3, [0.1, 0.2, 0.3], [0])
     pytest.raises(NotImplementedError, tk_to_braket, c)
