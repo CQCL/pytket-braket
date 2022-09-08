@@ -64,6 +64,8 @@ def tk_to_braket(
         cbs = [tkcirc.bits.index(cb) for cb in cmd.bits]
         op = cmd.op
         optype = op.type
+        if optype == OpType.Barrier:
+            continue
         params = op.params
         if optype == OpType.CCX:
             bkcirc.ccnot(*qbs)
