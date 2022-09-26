@@ -21,6 +21,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    Optional,
     Tuple,
     TypeVar,
     TYPE_CHECKING,
@@ -34,7 +35,9 @@ if TYPE_CHECKING:
 
 
 def tk_to_braket(
-    tkcirc: Circuit, mapped_qubits: bool = False
+    tkcirc: Circuit,
+    mapped_qubits: bool = False,
+    forced_qubits: Optional[List[int]] = None,
 ) -> Tuple[BK_Circuit, List[int], Dict[int, int]]:
     """
     Convert a tket :py:class:`Circuit` to a braket circuit.
@@ -43,6 +46,8 @@ def tk_to_braket(
     :param mapped_qubits: if True, `tkcirc` must have a single one-dimensional qubit
         register; the indices of the qubits in that register correspond directly to the
         qubit identifiers in the braket circuit
+    :param forced_qubits: optional list of braket qubit identifiers to include in the
+        converted circuit even if they are unused
     :returns: circuit converted to braket; list of braket qubit ids corresponding in
         order of corresponding positions in tkcirc.qubits; (partial) map from braket
         qubit ids to corresponding pytket bit indices holding measurement results
@@ -55,6 +60,8 @@ def tk_to_braket(
     measures = {}
     # Add no-ops on all qubits to ensure that even unused qubits are included in bkcirc:
     bkcirc.i(target_qubits)
+    if forced_qubits is not None:
+        bkcirc.i(forced_qubits)
     # Add commands
     for cmd in tkcirc.get_commands():
         qbs = [
