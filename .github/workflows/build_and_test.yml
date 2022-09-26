@@ -35,7 +35,7 @@ jobs:
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*
     - name: Set up Python 3.8
       if: github.event_name == 'push'
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.8'
     - name: Build and test (3.8)
@@ -45,7 +45,7 @@ jobs:
         ./.github/workflows/build-test nomypy
     - name: Set up Python 3.9
       if: github.event_name == 'pull_request' || github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel')
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
     - name: Build and test including remote checks (3.9) mypy
@@ -63,7 +63,7 @@ jobs:
         PYTKET_RUN_REMOTE_TESTS: 1
     - name: Set up Python 3.10
       if: github.event_name == 'push' || github.event_name == 'pull_request'
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
     - name: Build and test (3.10)
@@ -101,7 +101,7 @@ jobs:
         mkdir dist
         for w in `find wheelhouse/ -type f -name "*.whl"` ; do cp $w dist/ ; done
     - name: Publish wheels
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@release/v1.5.1
       with:
         user: __token__
         password: ${{ secrets.PYPI_PYTKET_BRAKET_API_TOKEN }}
@@ -117,7 +117,7 @@ jobs:
       with:
         fetch-depth: '0'
     - name: Set up Python 3.9
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.9'
     - name: Download all wheels
