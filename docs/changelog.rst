@@ -4,7 +4,8 @@ Changelog
 0.23.0 (unreleased)
 -------------------
 
-* Ignore ``OpType.Barrier`` when converting to braket circuit. 
+* Ignore ``OpType.Barrier`` when converting to braket circuit.
+* Fix results parsing when not all qubits are measured.
 
 0.22.0 (September 2022)
 -----------------------
