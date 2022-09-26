@@ -495,8 +495,7 @@ def test_postprocess_ionq(authenticated_braket_backend: BraketBackend) -> None:
     b.cancel(h)
 
 
-# @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-@pytest.mark.skip(reason="https://github.com/CQCL/pytket-braket/issues/18")
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize("authenticated_braket_backend", [None], indirect=True)
 def test_retrieve_available_devices(
     authenticated_braket_backend: BraketBackend,
