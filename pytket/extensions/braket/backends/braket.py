@@ -240,7 +240,7 @@ def _get_result(
     else:
         qubit_index = [0] * len(measures)
         for q, b in measures.items():
-            qubit_index[b] = q
+            qubit_index[b] = result.measured_qubits.index(q)
         measurements = result.measurements[:, qubit_index]
         kwargs["shots"] = OutcomeArray.from_readouts(measurements)
         kwargs["ppcirc"] = ppcirc
