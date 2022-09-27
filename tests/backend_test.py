@@ -123,8 +123,7 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     assert readout[1] == readout[2]
 
 
-# @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-@pytest.mark.skip(reason="https://github.com/CQCL/pytket-braket/issues/17")
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [{"device_type": "qpu", "provider": "ionq", "device": "ionQdevice"}],
@@ -474,8 +473,7 @@ def test_shots_bits_edgecases(n_shots: int, n_bits: int) -> None:
     assert res.get_counts() == correct_counts
 
 
-# @pytest.mark.skipif(skip_remote_tests, reason=REASON)
-@pytest.mark.skip(reason="https://github.com/CQCL/pytket-braket/issues/17")
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
     [{"device_type": "qpu", "provider": "ionq", "device": "ionQdevice"}],
