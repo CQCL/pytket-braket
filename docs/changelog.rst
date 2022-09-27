@@ -1,8 +1,8 @@
 Changelog
 ~~~~~~~~~
 
-0.23.0 (unreleased)
--------------------
+0.22.1 (September 2022)
+-----------------------
 
 * Ignore ``OpType.Barrier`` when converting to braket circuit.
 * Fix results parsing when not all qubits are measured.
