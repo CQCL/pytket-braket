@@ -240,7 +240,7 @@ def _get_result(
     else:
         qubit_index = [0] * len(measures)
         for q, b in measures.items():
-            qubit_index[b] = q
+            qubit_index[b] = result.measured_qubits.index(q)
         measurements = result.measurements[:, qubit_index]
         kwargs["shots"] = OutcomeArray.from_readouts(measurements)
         kwargs["ppcirc"] = ppcirc
@@ -421,6 +421,15 @@ class BraketBackend(Backend):
         self._supports_client_qubit_mapping = (
             self._device_type == _DeviceType.QPU
         ) and device_info["disabledQubitRewiringSupported"]
+
+        self._requires_all_qubits_measured = False
+        try:
+            if (self._device_type == _DeviceType.QPU) and props["action"][
+                DeviceActionType.OPENQASM
+            ]["requiresAllQubitsMeasurement"]:
+                self._requires_all_qubits_measured = True
+        except KeyError:
+            pass
 
         self._req_preds = [
             NoClassicalControlPredicate(),
@@ -665,7 +674,11 @@ class BraketBackend(Backend):
         self, circuit: Circuit
     ) -> Tuple[braket.circuits.Circuit, List[int], Dict[int, int]]:
         return tk_to_braket(
-            circuit, mapped_qubits=(self._device_type == _DeviceType.QPU)
+            circuit,
+            mapped_qubits=(self._device_type == _DeviceType.QPU),
+            forced_qubits=(
+                self._all_qubits if self._requires_all_qubits_measured else None
+            ),
         )
 
     def process_circuits(
