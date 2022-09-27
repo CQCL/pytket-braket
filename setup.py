@@ -40,11 +40,9 @@ setup(
     include_package_data=True,
     install_requires=[
         "pytket ~= 1.6",
-        # Pin to 1.29.2 for now:
-        # https://github.com/aws/amazon-braket-sdk-python/issues/453
-        "amazon-braket-sdk ~= 1.29.2",
+        "amazon-braket-sdk ~= 1.31",
         "amazon-braket-schemas ~= 1.10",
-        "amazon-braket-default-simulator ~= 1.8",
+        "amazon-braket-default-simulator ~= 1.9",
         "boto3-stubs",
     ],
     classifiers=[
