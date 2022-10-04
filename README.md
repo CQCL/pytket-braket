@@ -1,6 +1,6 @@
 # Pytket Extensions
 
-This repository contains the pytket-braket extension, using CQC's
+This repository contains the pytket-braket extension, using Quantinuum's
 [pytket](https://cqcl.github.io/tket/pytket/api/index.html) quantum SDK.
 The other pytket extensions can be found [here](https://github.com/CQCL/pytket-extensions)
 
@@ -12,6 +12,9 @@ with CQC tket, a set of quantum programming tools.
 
 `pytket-braket` is an extension to `pytket` that allows `pytket` circuits to be
 executed on a range of devices and simulators via Amazon's Braket service.
+
+Some useful links:
+- [API Documentation](https://cqcl.github.io/pytket-braket/api/index.html)
 
 ## Getting started
 
