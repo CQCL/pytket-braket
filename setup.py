@@ -31,7 +31,11 @@ setup(
     author="TKET development team",
     author_email="tket-support@cambridgequantum.com",
     python_requires=">=3.8",
-    url="https://github.com/CQCL/pytket-braket",
+    project_urls={
+        "Documentation": "https://cqcl.github.io/pytket-braket/api/index.html",
+        "Source": "https://github.com/CQCL/pytket-braket",
+        "Tracker": "https://github.com/CQCL/pytket-braket/issues",
+    },
     description="Extension for pytket, providing access to Amazon Braket backends",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
