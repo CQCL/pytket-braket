@@ -48,6 +48,7 @@ setup(
         "amazon-braket-schemas ~= 1.10",
         "amazon-braket-default-simulator ~= 1.9",
         "boto3-stubs",
+        "numpy == 1.23.3",
     ],
     classifiers=[
         "Environment :: Console",
