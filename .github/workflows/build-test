@@ -18,8 +18,6 @@ MODULE=pytket-braket
 
 MYPY=$1
 
-NUMPY=$2
-
 PLAT=`python -c 'import platform; print(platform.system())'`
 
 PYVER=`python -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
@@ -52,12 +50,6 @@ fi
 cd ${GITHUB_WORKSPACE}/tests
 
 python -m pip install --pre -r test-requirements.txt
-
-# temporary fix, see https://github.com/CQCL/pytket-braket/issues/36
-if [[ "${NUMPY}" = "numpyfix" ]]
-then
-    python -m pip install numpy==1.23.3
-fi
 
 pytest --doctest-modules
 
