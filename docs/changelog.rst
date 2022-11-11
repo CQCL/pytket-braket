@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+0.24.0 (unreleased)
+-------------------
+
+* Require circuits submitted to IonQ to have contiguous qubit numbering.
+
 0.23.0 (October 2022)
 ---------------------
 
