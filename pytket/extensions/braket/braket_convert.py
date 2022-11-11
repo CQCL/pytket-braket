@@ -38,6 +38,7 @@ def tk_to_braket(
     tkcirc: Circuit,
     mapped_qubits: bool = False,
     forced_qubits: Optional[List[int]] = None,
+    force_ops_on_target_qubits: bool = False,
 ) -> Tuple[BK_Circuit, List[int], Dict[int, int]]:
     """
     Convert a tket :py:class:`Circuit` to a braket circuit.
@@ -48,6 +49,7 @@ def tk_to_braket(
         qubit identifiers in the braket circuit
     :param forced_qubits: optional list of braket qubit identifiers to include in the
         converted circuit even if they are unused
+    :param force_ops_on_target_qubits: if True, add no-ops to all target qubits
     :returns: circuit converted to braket; list of braket qubit ids corresponding in
         order of corresponding positions in tkcirc.qubits; (partial) map from braket
         qubit ids to corresponding pytket bit indices holding measurement results
@@ -59,7 +61,8 @@ def tk_to_braket(
         target_qubits.append(bkq)
     measures = {}
     # Add no-ops on all qubits to ensure that even unused qubits are included in bkcirc:
-    bkcirc.i(target_qubits)
+    if force_ops_on_target_qubits:
+        bkcirc.i(target_qubits)
     if forced_qubits is not None:
         bkcirc.i(forced_qubits)
     # Add commands

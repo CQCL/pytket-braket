@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+0.24.0 (November 2022)
+----------------------
+
+* Require circuits submitted to IonQ to have contiguous qubit numbering.
+* Updated pytket version requirement to 1.8.
+
 0.23.0 (October 2022)
 ---------------------
 
