@@ -614,7 +614,11 @@ class BraketBackend(Backend):
         elif optimisation_level == 2:
             passes.append(FullPeepholeOptimise())
         passes.append(self.rebase_pass())
-        if self._device_type == _DeviceType.QPU and self.characterisation is not None:
+        if (
+            (self._device_type == _DeviceType.QPU)
+            and (self.characterisation is not None)
+            and (not self._requires_all_qubits_measured)
+        ):
             arch = self.backend_info.architecture
             passes.append(
                 CXMappingPass(
@@ -677,8 +681,14 @@ class BraketBackend(Backend):
             circuit,
             mapped_qubits=(self._device_type == _DeviceType.QPU),
             forced_qubits=(
-                self._all_qubits if self._requires_all_qubits_measured else None
+                self._all_qubits
+                if (
+                    self._requires_all_qubits_measured
+                    and OpType.noop in self.backend_info.gate_set
+                )
+                else None
             ),
+            force_ops_on_target_qubits=(OpType.noop in self.backend_info.gate_set),
         )
 
     def process_circuits(
