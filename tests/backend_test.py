@@ -170,8 +170,9 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     # Circuit with unused qubits
     c = Circuit(11).H(9).CX(9, 10)
     c = b.get_compiled_circuit(c)
-    h = b.process_circuit(c, 1)
-    b.cancel(h)
+    with pytest.raises(Exception) as e:
+        h = b.process_circuit(c, 1)
+        assert "non-contiguous qubits" in str(e.value)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
