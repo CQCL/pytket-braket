@@ -35,10 +35,12 @@ from pytket.utils.operators import QubitPauliOperator
 skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of AWS storage)"
 
+
 def skip_if_device_is_not_available(backend: BraketBackend) -> None:
-    """ Skip the test if the device of the provided `backend` is not available """
+    """Skip the test if the device of the provided `backend` is not available"""
     if not backend._device.is_available:
         pytest.skip(f"{backend._device.arn} is not available")
+
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
