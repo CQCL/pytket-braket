@@ -314,6 +314,27 @@ def test_local_simulator() -> None:
     assert sum(counts.values()) == n_shots
 
 
+def test_implicit_qubit_perm() -> None:
+    # https://github.com/CQCL/pytket-braket/issues/55
+    b = BraketBackend(local=True)
+
+    # State, without measurement:
+    c0 = Circuit(3).X(0).X(2).SWAP(0, 1)
+    c1 = b.get_compiled_circuit(c0)
+    s0 = b.run_circuit(c0).get_state()
+    s1 = b.run_circuit(c1).get_state()
+    assert np.isclose(abs(s0[3]), 1.0)
+    assert np.isclose(abs(s1[3]), 1.0)
+
+    # Counts, with measurement:
+    c0.measure_all()
+    c1 = b.get_compiled_circuit(c0)
+    x0 = b.run_circuit(c0, n_shots=2).get_counts()
+    x1 = b.run_circuit(c1, n_shots=2).get_counts()
+    assert x0 == Counter({(0, 1, 1): 2})
+    assert x1 == Counter({(0, 1, 1): 2})
+
+
 def test_local_dm_simulator() -> None:
     b = BraketBackend(local=True, local_device="braket_dm")
     assert b.supports_shots
