@@ -90,7 +90,7 @@ def test_dm_simulator(authenticated_braket_backend: BraketBackend) -> None:
     skip_if_device_is_not_available(b)
     assert b.supports_density_matrix
     c = Circuit(2).H(0).SWAP(0, 1)
-    cc = b.get_compiled_circuit(c, optimisation_level=1)
+    cc = b.get_compiled_circuit(c)
     h = b.process_circuit(cc)
     r = b.get_result(h)
     m = r.get_density_matrix()
