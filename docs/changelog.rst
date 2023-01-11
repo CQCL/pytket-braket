@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 * Drop support for Python 3.8; add support for 3.11.
+* Fix handling of implicit qubit permutation for state simulators.
 
 0.25.0 (November 2022)
 ----------------------
