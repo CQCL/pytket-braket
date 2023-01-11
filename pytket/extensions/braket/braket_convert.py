@@ -54,9 +54,12 @@ def tk_to_braket(
         order of corresponding positions in tkcirc.qubits; (partial) map from braket
         qubit ids to corresponding pytket bit indices holding measurement results
     """
+    tkcirc1 = tkcirc.copy()
+    if tkcirc1.n_gates_of_type(OpType.Measure) == 0:
+        tkcirc1.replace_implicit_wire_swaps()
     bkcirc = BK_Circuit()
     target_qubits = []
-    for i, qb in enumerate(tkcirc.qubits):
+    for i, qb in enumerate(tkcirc1.qubits):
         bkq = qb.index[0] if mapped_qubits else i
         target_qubits.append(bkq)
     measures = {}
@@ -66,12 +69,12 @@ def tk_to_braket(
     if forced_qubits is not None:
         bkcirc.i(forced_qubits)
     # Add commands
-    for cmd in tkcirc.get_commands():
+    for cmd in tkcirc1.get_commands():
         qbs = [
-            qb.index[0] if mapped_qubits else tkcirc.qubits.index(qb)
+            qb.index[0] if mapped_qubits else tkcirc1.qubits.index(qb)
             for qb in cmd.qubits
         ]
-        cbs = [tkcirc.bits.index(cb) for cb in cmd.bits]
+        cbs = [tkcirc1.bits.index(cb) for cb in cmd.bits]
         op = cmd.op
         optype = op.type
         if optype == OpType.Barrier:
