@@ -1,4 +1,4 @@
-# Copyright 2019-2022 Cambridge Quantum Computing
+# Copyright 2019-2023 Cambridge Quantum Computing
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,12 @@ skip_remote_tests: bool = os.getenv("PYTKET_RUN_REMOTE_TESTS") is None
 REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of AWS storage)"
 
 
+def skip_if_device_is_not_available(backend: BraketBackend) -> None:
+    """Skip the test if the device of the provided `backend` is not available"""
+    if not backend._device.is_available:
+        pytest.skip(f"{backend._device.arn} is not available")
+
+
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
@@ -44,6 +50,7 @@ REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of AWS storage
 )
 def test_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     assert b.supports_shots
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
@@ -72,7 +79,6 @@ def test_simulator(authenticated_braket_backend: BraketBackend) -> None:
     assert readout[1] == readout[2]
 
 
-@pytest.mark.skip(reason="https://github.com/CQCL/pytket-braket/issues/7")
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
@@ -81,6 +87,7 @@ def test_simulator(authenticated_braket_backend: BraketBackend) -> None:
 )
 def test_dm_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     assert b.supports_density_matrix
     c = Circuit(2).H(0).SWAP(0, 1)
     cc = b.get_compiled_circuit(c)
@@ -100,6 +107,7 @@ def test_dm_simulator(authenticated_braket_backend: BraketBackend) -> None:
 )
 def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     assert b.supports_shots
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
@@ -131,6 +139,7 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
 )
 def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
@@ -190,6 +199,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
 )
 def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
@@ -235,6 +245,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
 def test_rigetti_with_rerouting(authenticated_braket_backend: BraketBackend) -> None:
     # A circuit that requires rerouting to a non-fully-connected architecture
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     c = Circuit(4).CX(0, 1).CX(0, 2).CX(0, 3).CX(1, 2).CX(1, 3).CX(2, 3)
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 10)
@@ -256,6 +267,7 @@ def test_rigetti_with_rerouting(authenticated_braket_backend: BraketBackend) -> 
 )
 def test_oqc(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
@@ -300,6 +312,27 @@ def test_local_simulator() -> None:
     counts = res.get_counts()
     assert len(counts) <= 2
     assert sum(counts.values()) == n_shots
+
+
+def test_implicit_qubit_perm() -> None:
+    # https://github.com/CQCL/pytket-braket/issues/55
+    b = BraketBackend(local=True)
+
+    # State, without measurement:
+    c0 = Circuit(3).X(0).X(2).SWAP(0, 1)
+    c1 = b.get_compiled_circuit(c0)
+    s0 = b.run_circuit(c0).get_state()
+    s1 = b.run_circuit(c1).get_state()
+    assert np.isclose(abs(s0[3]), 1.0)
+    assert np.isclose(abs(s1[3]), 1.0)
+
+    # Counts, with measurement:
+    c0.measure_all()
+    c1 = b.get_compiled_circuit(c0)
+    x0 = b.run_circuit(c0, n_shots=2).get_counts()
+    x1 = b.run_circuit(c1, n_shots=2).get_counts()
+    assert x0 == Counter({(0, 1, 1): 2})
+    assert x1 == Counter({(0, 1, 1): 2})
 
 
 def test_local_dm_simulator() -> None:
@@ -482,6 +515,7 @@ def test_shots_bits_edgecases(n_shots: int, n_bits: int) -> None:
 )
 def test_postprocess_ionq(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     assert b.supports_contextual_optimisation
     c = Circuit(2).H(0).CX(0, 1).Y(0)
     c.measure_all()
@@ -560,6 +594,7 @@ def test_multiple_indices() -> None:
 )
 def test_multiple_indices_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
     c = Circuit(0, 2)
     q0 = Qubit("Z", [0, 0])
     q1 = Qubit("Z", [0, 1])
