@@ -13,19 +13,16 @@
 # - `boto3`, which is Amazon's package for accessing AWS (so called because Boto dolphins live in the Amazon 🙄) [boto3](https://pypi.org/project/boto3/)
 #     - `pip install boto3`
 
-
 # ### What are we doing?
 
 # There is a hierarchy of things we need to access here, as illustrated below. Amazon Web Services (AWS) contains many things, one of which is Amazon Braket. That in turn contains many quantum devices we can run things on.
 
 # Essentially we nest interfaces from the three packages above to access each layer of services:
-# $$
-# \textrm{amazon web services} \rightarrow \textrm{amazon braket} \rightarrow \textrm{quantum device}
-# $$
+# $$ \textrm{amazon web services} \rightarrow \textrm{amazon braket} \rightarrow \textrm{quantum device} $$
 
-
-# ![Alt text](aws_img_w.png)
-
+# <div>
+# <img src="python/aws_img.png" width="500"/>
+# </div>
 
 # ### Credentials
 
@@ -55,13 +52,12 @@
 # - Once you've created the bucket, select it and create a folder inside. In python, the name of this folder becomes known as the `bucket_key`.
 
 # #### Create a credentials file
-# - Finally, in the directory you're working in, create a file with the following format, and name it somethign sensible like `aws_creds.txt`:
+# - Finally, in the directory you're working in, create a file with the following format, and name it something sensible like `aws_creds.txt`:
 
 #     aws_access_key_id
 #     aws_secret_access_key
 #     s3_name [i.e. the name of your bucket]
 #     bucket_key [i.e. the name of the folder you created in the bucket]
-    
 
 # ### Running a circuit
 
@@ -105,7 +101,6 @@ my_aws_session = AwsSession(boto_session=my_boto_session)
 # Print devices available in our region
 [x.device_name for x in BraketBackend.available_devices(region=my_region,
                                                         aws_session=my_aws_session)]
-
 
 # Initialise BraketBackend for OQC device
 aws_oqc_backend = BraketBackend(local=False,
