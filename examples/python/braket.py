@@ -6,12 +6,13 @@
 
 # #### Python packages:
 
-# - `pytket`'s extension for Amazon Braket devices [pytket-braket](https://pypi.org/project/pytket-braket/)
-#     - `pip install pytket-braket`
-# - Amazon's braket package [amazon-braket-sdk](https://pypi.org/project/amazon-braket-sdk/)
-#     - `pip install amazon-braket-sdk`
 # - `boto3`, which is Amazon's package for accessing AWS (so called because Boto dolphins live in the Amazon 🙄) [boto3](https://pypi.org/project/boto3/)
-#     - `pip install boto3`
+# - `amazon-braket-sdk`, which is Amazon's braket package [amazon-braket-sdk](https://pypi.org/project/amazon-braket-sdk/)
+# - `pytket`'s extension for Amazon Braket devices [pytket-braket](https://pypi.org/project/pytket-braket/)
+
+# To install these, you can run the following:
+#    `pip install pytket-braket boto3`
+# (`pytket-braket` has `amazon-braket-sdk` as a dependency, so you don't need to install that separately)
 
 # ### What are we doing?
 
@@ -51,13 +52,19 @@
 # - Under AWS, go to Amazon S3 and create a new bucket and choose a `name` and the `region` from above. __NOTE:__ the `name` __must__ start with the prefix `amazon-braket`, e.g. `amazon-braket-my-test-experiment`!
 # - Once you've created the bucket, select it and create a folder inside. In python, the name of this folder becomes known as the `bucket_key`.
 
-# #### Create a credentials file
-# - Finally, in the directory you're working in, create a file with the following format, and name it something sensible like `aws_creds.txt`:
-
-#     aws_access_key_id
-#     aws_secret_access_key
-#     s3_name [i.e. the name of your bucket]
-#     bucket_key [i.e. the name of the folder you created in the bucket]
+# #### Set up your credentials
+# - Finally, follow the instructions [here](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html) to create a credentials file. This can be done using the `aws configure` command in the terminal once you've `pip`-installed the `aws-shell` package.
+# - You can create multiple profiles this way, but as standard you can pass `profile-name=default` to load your credentials, as we'll see below.
+# - You can also set defaults such as `s3_bucket` and `s3_folder` in the `~/.config/pytket/config.json` file so you don't have to pass them in manually:
+# ```
+# "extensions": {
+#  "braket": {
+#    "region": "eu-west-2",
+#    "s3_bucket": "amazon-braket-my-bucket-name",
+#    "s3_folder": "my-folder-name"
+#  }
+# }
+# ```
 
 # ### Running a circuit
 
@@ -83,37 +90,33 @@ circ.measure_all()
 rcj(circ)
 
 # Use region and bucket defined in AWS earlier
-my_region = 'eu-west-2'
-my_s3_bucket = 'amazon-braket-example'
-
-# Read in credentials from the file created earlier
-with open('aws_cred.txt', 'r') as f:
-    aws_access_key_id, aws_secret_access_key, s3_name, bucket_key =\
-        [s.strip() for s in f.readlines()]
+my_region = "eu-west-2"
 
 # Access AWS with boto3, and pass the session to braket
-my_boto_session = boto3.Session(aws_access_key_id=aws_access_key_id,
-                                aws_secret_access_key=aws_secret_access_key,
-                                region_name=my_region)
-                                
+my_boto_session = boto3.Session(profile_name="default")
+
 my_aws_session = AwsSession(boto_session=my_boto_session)
 
-# Print devices available in our region
-[x.device_name for x in BraketBackend.available_devices(region=my_region,
-                                                        aws_session=my_aws_session)]
+# Print devices available in our region
+[
+    x.device_name
+    for x in BraketBackend.available_devices(
+        region=my_region, aws_session=my_aws_session
+    )
+]
 
 # Initialise BraketBackend for OQC device
-aws_oqc_backend = BraketBackend(local=False,
-                                region=my_region,
-                                device='Lucy',
-                                s3_bucket=s3_name,
-                                s3_folder=bucket_key,
-                                device_type='qpu',
-                                provider='oqc',
-                                aws_session=my_aws_session)
-                                
+aws_oqc_backend = BraketBackend(
+    local=False,
+    region="eu-west-2",
+    device="Lucy",
+    device_type="qpu",
+    provider="oqc",
+)
+
+
 # Compile circuit for device:
-compiled_circ = aws_oqc_backend.get_compiled_circuit(circ,2)
+compiled_circ = aws_oqc_backend.get_compiled_circuit(circ, 2)
 print("Valid circuit: ", aws_oqc_backend.valid_circuit(compiled_circ))
 
 oqc_handle = aws_oqc_backend.process_circuit(compiled_circ, n_shots=500)
