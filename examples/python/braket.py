@@ -70,18 +70,17 @@
 
 # For the purposes of this example, we'll assume that you've created the files above, and that we want to access OQC's Lucy quantum device.
 
-# Circuit construction
-from pytket import Circuit
-from pytket.circuit.display import render_circuit_jupyter as rcj
-from pytket.extensions.braket import tk_to_braket
-from pytket.extensions.braket import BraketBackend
-
 # Accessing AWS
 import boto3
 from braket.aws.aws_session import AwsSession
 
+# Circuit construction
+from pytket import Circuit
+from pytket.circuit.display import render_circuit_jupyter as rcj
+from pytket.extensions.braket import BraketBackend
+
 # Define a simple circuit:
-n_qubits = 2
+N_QUBITS = 2
 circ = Circuit(2)
 circ.H(0)
 circ.CX(0, 1)
@@ -90,7 +89,7 @@ circ.measure_all()
 rcj(circ)
 
 # Use region and bucket defined in AWS earlier
-my_region = "eu-west-2"
+MY_REGION = "eu-west-2"
 
 # Access AWS with boto3, and pass the session to braket
 my_boto_session = boto3.Session(profile_name="default")
@@ -98,12 +97,14 @@ my_boto_session = boto3.Session(profile_name="default")
 my_aws_session = AwsSession(boto_session=my_boto_session)
 
 # Print devices available in our region
-[
-    x.device_name
-    for x in BraketBackend.available_devices(
-        region=my_region, aws_session=my_aws_session
-    )
-]
+print(
+    [
+        x.device_name
+        for x in BraketBackend.available_devices(
+            region=MY_REGION, aws_session=my_aws_session
+        )
+    ]
+)
 
 # Initialise BraketBackend for OQC device
 aws_oqc_backend = BraketBackend(
