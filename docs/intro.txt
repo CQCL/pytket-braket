@@ -2,7 +2,7 @@ pytket-braket
 =============
 
 ``pytket-braket`` is an extension to ``pytket`` that allows ``pytket`` circuits to
-be executed on quantum devices and simulators via Amazon's Braket service, but it does not currently support the QuEra backend.
+be executed on gate-model quantum devices and simulators via Amazon's Braket service.
 
 ``pytket-braket`` is available for Python 3.9, 3.10 and 3.11, on Linux, MacOS
 and Windows. To install, run:
