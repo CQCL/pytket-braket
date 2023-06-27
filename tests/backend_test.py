@@ -140,7 +140,13 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
             "region": "us-east-1",
             "provider": "ionq",
             "device": "Harmony",
-        }
+        },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-1",
+        },
     ],
     indirect=True,
 )

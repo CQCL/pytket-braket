@@ -356,9 +356,11 @@ class BraketBackend(Backend):
             else:
                 raise ValueError(f"Unsupported device type {aws_device_type}")
         props = self._device.properties.dict()
-        try:
-            device_info = props["action"][DeviceActionType.JAQCD]
-        except KeyError:
+        action = props["action"]
+        device_info = action.get(DeviceActionType.JAQCD)
+        if device_info is None:
+            device_info = action.get(DeviceActionType.OPENQASM)
+        if device_info is None:
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
 
