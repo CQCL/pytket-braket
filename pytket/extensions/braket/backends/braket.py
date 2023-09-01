@@ -70,7 +70,12 @@ from pytket.passes import (  # type: ignore
     SimplifyInitial,
     NaivePlacementPass,
 )
-from pytket._tket.circuit._library import _TK1_to_RzRx  # type: ignore
+
+try:
+    from pytket.circuit_library import _TK1_to_RzRx  # type: ignore
+except (ModuleNotFoundError, ImportError):
+    # pytket <= 1.18
+    from pytket._tket.circuit._library import _TK1_to_RzRx  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.predicates import (  # type: ignore
     ConnectivityPredicate,
