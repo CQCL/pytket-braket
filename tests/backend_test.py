@@ -20,6 +20,7 @@ from hypothesis import given, settings, strategies
 import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
+from pytket.architecture import Architecture
 from pytket.circuit import Circuit, OpType, Qubit, Bit  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.utils.expectations import (
@@ -159,6 +160,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
 
     # Device is fully connected
     arch = b.backend_info.architecture
+    assert isinstance(arch, Architecture)
     n = len(arch.nodes)
     assert len(arch.coupling) == n * (n - 1)
 

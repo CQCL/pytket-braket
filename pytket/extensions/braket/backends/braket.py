@@ -307,13 +307,13 @@ class BraketBackend(Backend):
         # load config
         config = BraketConfig.from_default_config_file()
         if s3_bucket is None:
-            s3_bucket = config.s3_bucket
+            s3_bucket = config.s3_bucket  # type: ignore
         if s3_folder is None:
-            s3_folder = config.s3_folder
+            s3_folder = config.s3_folder  # type: ignore
         if device_type is None:
-            device_type = config.device_type
+            device_type = config.device_type  # type: ignore
         if provider is None:
-            provider = config.provider
+            provider = config.provider  # type: ignore
 
         # set defaults if not overridden
         if device_type is None:
@@ -627,11 +627,12 @@ class BraketBackend(Backend):
             and (not self._requires_all_qubits_measured)
         ):
             arch = self.backend_info.architecture
+            assert isinstance(arch, Architecture)
             passes.append(
                 CXMappingPass(
                     arch,
                     NoiseAwarePlacement(
-                        arch, **get_avg_characterisation(self.characterisation)
+                        arch, **get_avg_characterisation(self.characterisation)  # type: ignore
                     ),
                     directed_cx=False,
                     delay_measures=True,
@@ -994,7 +995,7 @@ class BraketBackend(Backend):
         res = task.result()
         return res.get_value_by_result_type(restype)  # type: ignore
 
-    def get_pauli_expectation_value(
+    def get_pauli_expectation_value(  # type: ignore
         self,
         state_circuit: Circuit,
         pauli: QubitPauliString,
@@ -1023,7 +1024,7 @@ class BraketBackend(Backend):
         observable, qbs = _obs_from_qps(state_circuit, pauli)
         return self._get_expectation_value(bkcirc, observable, qbs, n_shots, **kwargs)
 
-    def get_operator_expectation_value(
+    def get_operator_expectation_value(  # type: ignore
         self,
         state_circuit: Circuit,
         operator: QubitPauliOperator,
