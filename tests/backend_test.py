@@ -20,6 +20,7 @@ from hypothesis import given, settings, strategies
 import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
+from pytket.architecture import Architecture
 from pytket.circuit import Circuit, OpType, Qubit, Bit  # type: ignore
 from pytket.pauli import Pauli, QubitPauliString  # type: ignore
 from pytket.utils.expectations import (
@@ -159,6 +160,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
 
     # Device is fully connected
     arch = b.backend_info.architecture
+    assert isinstance(arch, Architecture)
     n = len(arch.nodes)
     assert len(arch.coupling) == n * (n - 1)
 
@@ -204,7 +206,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-2",
+            "device": "Aspen-M-3",
             "region": "us-west-1",
         }
     ],
@@ -249,7 +251,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-2",
+            "device": "Aspen-M-3",
             "region": "us-west-1",
         }
     ],
@@ -606,7 +608,7 @@ def test_multiple_indices() -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-2",
+            "device": "Aspen-M-3",
             "region": "us-west-1",
         }
     ],
