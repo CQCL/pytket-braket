@@ -28,10 +28,10 @@ from typing import (
 )
 from numpy import pi
 from braket.circuits import Circuit as BK_Circuit  # type: ignore
-from pytket.circuit import Circuit, OpType, Qubit  # type: ignore
+from pytket.circuit import Circuit, OpType, Qubit
 
 if TYPE_CHECKING:
-    from pytket.circuit import Node  # type: ignore
+    from pytket.circuit import Node
 
 
 def tk_to_braket(

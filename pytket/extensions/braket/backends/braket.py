@@ -42,7 +42,7 @@ from braket.circuits.result_type import ResultType  # type: ignore
 from braket.device_schema import DeviceActionType  # type: ignore
 from braket.devices import LocalSimulator  # type: ignore
 from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
-import boto3  # type: ignore
+import boto3
 import numpy as np
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
@@ -55,8 +55,8 @@ from pytket.extensions.braket.braket_convert import (
     get_avg_characterisation,
 )
 from pytket.extensions.braket._metadata import __extension_version__
-from pytket.circuit import Circuit, OpType  # type: ignore
-from pytket.passes import (  # type: ignore
+from pytket.circuit import Circuit, OpType
+from pytket.passes import (
     BasePass,
     CXMappingPass,
     RebaseCustom,
@@ -70,9 +70,9 @@ from pytket.passes import (  # type: ignore
     SimplifyInitial,
     NaivePlacementPass,
 )
-from pytket.circuit_library import _TK1_to_RzRx  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.predicates import (  # type: ignore
+from pytket.circuit_library import _TK1_to_RzRx
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.predicates import (
     ConnectivityPredicate,
     GateSetPredicate,
     MaxNQubitsPredicate,
@@ -82,8 +82,8 @@ from pytket.predicates import (  # type: ignore
     NoSymbolsPredicate,
     Predicate,
 )
-from pytket.architecture import Architecture  # type: ignore
-from pytket.placement import NoiseAwarePlacement  # type: ignore
+from pytket.architecture import Architecture
+from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.outcomearray import OutcomeArray
@@ -91,7 +91,7 @@ from pytket.utils.outcomearray import OutcomeArray
 from .config import BraketConfig
 
 if TYPE_CHECKING:
-    from pytket.circuit import Node  # type: ignore
+    from pytket.circuit import Node
 
 # Known schemas for noise characteristics
 IONQ_SCHEMA = {
@@ -857,7 +857,7 @@ class BraketBackend(Backend):
         aws_session: Optional[AwsSession] = kwargs.get("aws_session")
         if aws_session is None:
             if region is not None:
-                session = AwsSession(boto_session=boto3.Session(region_name=region))  # type: ignore
+                session = AwsSession(boto_session=boto3.Session(region_name=region))
             else:
                 session = AwsSession()
         else:
