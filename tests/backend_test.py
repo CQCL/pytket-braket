@@ -21,8 +21,8 @@ import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
 from pytket.architecture import Architecture
-from pytket.circuit import Circuit, OpType, Qubit, Bit  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
+from pytket.circuit import Circuit, OpType, Qubit, Bit
+from pytket.pauli import Pauli, QubitPauliString
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
@@ -476,7 +476,7 @@ def test_state() -> None:
     h = b.process_circuit(c)
     res = b.get_result(h)
     v = res.get_state()
-    assert np.vdot(v, v) == pytest.approx(1)  # type: ignore
+    assert np.vdot(v, v) == pytest.approx(1)
 
 
 def test_default_pass() -> None:
@@ -494,7 +494,7 @@ def test_default_pass() -> None:
 
 
 @given(
-    n_shots=strategies.integers(min_value=1, max_value=10),  # type: ignore
+    n_shots=strategies.integers(min_value=1, max_value=10),
     n_bits=strategies.integers(min_value=0, max_value=10),
 )
 @settings(deadline=None)
