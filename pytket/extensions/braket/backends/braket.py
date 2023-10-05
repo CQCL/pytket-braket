@@ -647,10 +647,6 @@ class BraketBackend(Backend):
                     self._squash_pass,
                 ]
             )
-        if self.supports_contextual_optimisation and optimisation_level > 0:
-            passes.append(
-                SimplifyInitial(allow_classical=False, create_all_qubits=True)
-            )
         return SequencePass(passes)
 
     @property
@@ -702,7 +698,12 @@ class BraketBackend(Backend):
         **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
         """
-        Supported `kwargs`: none
+        Supported `kwargs`:
+        - `postprocess`: apply end-of-circuit simplifications and classical
+          postprocessing to improve fidelity of results (bool, default False)
+        - `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
+          fidelity of results assuming all qubits initialized to zero (bool, default
+          False)
         """
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
@@ -729,6 +730,7 @@ class BraketBackend(Backend):
             self._check_all_circuits(circuits, nomeasure_warn=False)
 
         postprocess = kwargs.get("postprocess", False)
+        simplify_initial = kwargs.get("postprocess", False)
 
         handles = []
         for circ, n_shots in zip(circuits, n_shots_list):
@@ -739,6 +741,8 @@ class BraketBackend(Backend):
                 ppcirc_rep = ppcirc.to_dict()
             else:
                 c0, ppcirc, ppcirc_rep = circ, None, None
+            if self.supports_contextual_optimisation and simplify_initial:
+                SimplifyInitial(allow_classical=False, create_all_qubits=True).apply(c0)
             bkcirc, target_qubits, measures = self._to_bkcirc(c0)
             if want_state:
                 bkcirc.add_result_type(ResultType.StateVector())
