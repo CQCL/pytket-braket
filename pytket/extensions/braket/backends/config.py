@@ -50,11 +50,11 @@ def set_braket_config(
     for AWS Braket. Can be overridden in backend construction."""
     config = BraketConfig.from_default_config_file()
     if s3_bucket is not None:
-        config.s3_bucket = s3_bucket  # type: ignore
+        config.s3_bucket = s3_bucket
     if s3_folder is not None:
-        config.s3_folder = s3_folder  # type: ignore
+        config.s3_folder = s3_folder
     if device_type is not None:
-        config.device_type = device_type  # type: ignore
+        config.device_type = device_type
     if provider is not None:
-        config.provider = provider  # type: ignore
+        config.provider = provider
     config.update_default_config_file()
