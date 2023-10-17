@@ -302,13 +302,13 @@ class BraketBackend(Backend):
         # load config
         config = BraketConfig.from_default_config_file()
         if s3_bucket is None:
-            s3_bucket = config.s3_bucket  # type: ignore
+            s3_bucket = config.s3_bucket
         if s3_folder is None:
-            s3_folder = config.s3_folder  # type: ignore
+            s3_folder = config.s3_folder
         if device_type is None:
-            device_type = config.device_type  # type: ignore
+            device_type = config.device_type
         if provider is None:
-            provider = config.provider  # type: ignore
+            provider = config.provider
 
         # set defaults if not overridden
         if device_type is None:
