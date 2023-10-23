@@ -730,7 +730,7 @@ class BraketBackend(Backend):
             self._check_all_circuits(circuits, nomeasure_warn=False)
 
         postprocess = kwargs.get("postprocess", False)
-        simplify_initial = kwargs.get("postprocess", False)
+        simplify_initial = kwargs.get("simplify_initial", False)
 
         handles = []
         for circ, n_shots in zip(circuits, n_shots_list):
