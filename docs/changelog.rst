@@ -1,6 +1,11 @@
 Changelog
 ~~~~~~~~~
 
+0.31.1 (October 2023)
+---------------------
+
+* Fix use of ``SimplifyInitial``
+
 0.31.0 (October 2023)
 ---------------------
 
