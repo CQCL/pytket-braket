@@ -451,11 +451,11 @@ class BraketBackend(Backend):
         self._rebase_pass = RebaseCustom(
             self._multiqs | self._singleqs,
             Circuit(),
-            _TK1_to_RzRx,
+            TK1_to_RzRx,
         )
         self._squash_pass = SquashCustom(
             self._singleqs,
-            _TK1_to_RzRx,
+            TK1_to_RzRx,
         )
 
     @staticmethod
