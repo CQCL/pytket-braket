@@ -70,7 +70,7 @@ from pytket.passes import (
     SimplifyInitial,
     NaivePlacementPass,
 )
-from pytket.circuit_library import _TK1_to_RzRx
+from pytket.circuit_library import TK1_to_RzRx
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import (
     ConnectivityPredicate,
