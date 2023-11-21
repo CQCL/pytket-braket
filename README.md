@@ -1,8 +1,3 @@
-# Pytket Extensions
-
-This repository contains the pytket-braket extension, using Quantinuum's
-[pytket](https://cqcl.github.io/tket/pytket/api/index.html) quantum SDK.
-
 # pytket-braket
 
 [Pytket](https://cqcl.github.io/tket/pytket/api/index.html) is a python module for interfacing
