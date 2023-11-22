@@ -7,7 +7,7 @@ with CQC tket, a set of quantum programming tools.
 executed on a range of devices and simulators via Amazon's Braket service.
 
 Some useful links:
-- [API Documentation](https://tket.quantinuum.com/extensions/pytket-braket/api/index.html)
+- [API Documentation](https://tket.quantinuum.com/extensions/pytket-braket/)
 
 ## Getting started
 
