@@ -32,7 +32,7 @@ setup(
     author_email="tket-support@cambridgequantum.com",
     python_requires=">=3.9",
     project_urls={
-        "Documentation": "https://cqcl.github.io/pytket-braket/api/index.html",
+        "Documentation": "https://tket.quantinuum.com/extensions/pytket-braket/api/index.html",
         "Source": "https://github.com/CQCL/pytket-braket",
         "Tracker": "https://github.com/CQCL/pytket-braket/issues",
     },
@@ -43,7 +43,7 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket ~= 1.21",
+        "pytket ~= 1.22",
         "amazon-braket-sdk ~= 1.53",
         "amazon-braket-schemas ~= 1.19",
         "amazon-braket-default-simulator ~= 1.20",
