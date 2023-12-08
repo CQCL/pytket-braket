@@ -39,7 +39,7 @@ jobs:
     - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*
     - name: Set up Python 3.9
       if: github.event_name == 'push' || github.event_name == 'schedule'
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     - name: Build and test (3.9)
@@ -48,7 +48,7 @@ jobs:
       run: |
         ./.github/workflows/build-test nomypy numpy
     - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     - name: Build and test including remote checks (3.10) mypy
@@ -66,7 +66,7 @@ jobs:
         PYTKET_RUN_REMOTE_TESTS: 1
     - name: Set up Python 3.11
       if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'schedule'
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: Build and test (3.11) - macos and ubuntu
@@ -125,7 +125,7 @@ jobs:
       with:
         fetch-depth: '0'
     - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     - name: Download all wheels
