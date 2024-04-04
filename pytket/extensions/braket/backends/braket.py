@@ -581,11 +581,12 @@ class BraketBackend(Backend):
 
             # Construct a fake coupling map if we have a FullyConnected architecture,
             # otherwise use the coupling provided by the Architecture class.
-            coupling: list[tuple[Node, Node]]
+            coupling: list[tuple["Node", "Node"]]
             if isinstance(arch, FullyConnected):
-                # cast is necessary as mypy does not know that we passed 2 to `permutations`.
+                # cast is needed as mypy does not know that we passed a fixed
+                # integer to `permutations`.
                 coupling = cast(
-                    list[tuple[Node, Node]], list(permutations(arch.nodes, 2))
+                    list[tuple["Node", "Node"]], list(permutations(arch.nodes, 2))
                 )
             else:
                 coupling = arch.coupling
