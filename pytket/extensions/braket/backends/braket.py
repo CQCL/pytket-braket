@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from itertools import permutations
 import json
 import warnings
 from enum import Enum
@@ -494,8 +495,6 @@ class BraketBackend(Backend):
             connectivity = paradigm["connectivity"]
             if connectivity["fullyConnected"]:
                 all_qubits: List = list(range(n_qubits))
-                arch = FullyConnected(len(all_qubits))
-                return arch, all_qubits
             else:
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
@@ -513,9 +512,8 @@ class BraketBackend(Backend):
             all_qubits = list(range(n_qubits))
 
         if connectivity_graph is None:
-            connectivity_graph = dict(
-                (k, [v for v in all_qubits if v != k]) for k in all_qubits
-            )
+            arch = FullyConnected(len(all_qubits))
+            return arch, all_qubits
         arch = Architecture([(k, v) for k, l in connectivity_graph.items() for v in l])
         return arch, all_qubits
 
@@ -578,9 +576,16 @@ class BraketBackend(Backend):
             readout_errors = {
                 node: to_sym_mat(get_readout_error(node)) for node in arch.nodes
             }
+
+            # Construct a fake coupling map if we have a FullyConnected architecture,
+            # otherwise use the coupling provided by the Architecture class.
+            if isinstance(arch, FullyConnected):
+                coupling = permutations(arch.nodes, 2)
+            else:
+                coupling = arch.coupling
             link_errors = {
                 (n0, n1): {optype: get_link_error(n0, n1) for optype in multiqs}
-                for n0, n1 in arch.coupling
+                for n0, n1 in coupling
             }
 
             backend_info = BackendInfo(
