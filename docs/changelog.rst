@@ -1,6 +1,12 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Devices with full connectivity will use the `FullyConnected` class
+  to represent their architecture.
+
 0.35.1 (March 2024)
 -------------------
 

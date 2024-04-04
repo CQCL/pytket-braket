@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from itertools import permutations
 import json
 import warnings
 from enum import Enum
@@ -82,7 +83,7 @@ from pytket.predicates import (
     NoSymbolsPredicate,
     Predicate,
 )
-from pytket.architecture import Architecture
+from pytket.architecture import Architecture, FullyConnected
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
@@ -442,9 +443,8 @@ class BraketBackend(Backend):
             MaxNQubitsPredicate(n_qubits),
         ]
 
-        if (
-            self._device_type == _DeviceType.QPU
-            and not paradigm["connectivity"]["fullyConnected"]
+        if self._device_type == _DeviceType.QPU and not isinstance(
+            arch, FullyConnected
         ):
             self._req_preds.append(ConnectivityPredicate(arch))
 
@@ -485,7 +485,7 @@ class BraketBackend(Backend):
     @staticmethod
     def _get_arch_info(
         device_properties: Dict[str, Any], device_type: _DeviceType
-    ) -> Tuple[Architecture, List[int]]:
+    ) -> Tuple[Architecture | FullyConnected, List[int]]:
         # return the architecture, and all_qubits
         paradigm = device_properties["paradigm"]
         n_qubits = paradigm["qubitCount"]
@@ -510,17 +510,19 @@ class BraketBackend(Backend):
         else:
             all_qubits = list(range(n_qubits))
 
+        arch: Architecture | FullyConnected
         if connectivity_graph is None:
-            connectivity_graph = dict(
-                (k, [v for v in all_qubits if v != k]) for k in all_qubits
+            arch = FullyConnected(len(all_qubits))
+        else:
+            arch = Architecture(
+                [(k, v) for k, l in connectivity_graph.items() for v in l]
             )
-        arch = Architecture([(k, v) for k, l in connectivity_graph.items() for v in l])
         return arch, all_qubits
 
     @classmethod
     def _get_backend_info(
         cls,
-        arch: Architecture,
+        arch: Architecture | FullyConnected,
         device_name: str,
         singleqs: Set[OpType],
         multiqs: Set[OpType],
@@ -576,9 +578,21 @@ class BraketBackend(Backend):
             readout_errors = {
                 node: to_sym_mat(get_readout_error(node)) for node in arch.nodes
             }
+
+            # Construct a fake coupling map if we have a FullyConnected architecture,
+            # otherwise use the coupling provided by the Architecture class.
+            coupling: list[tuple["Node", "Node"]]
+            if isinstance(arch, FullyConnected):
+                # cast is needed as mypy does not know that we passed a fixed
+                # integer to `permutations`.
+                coupling = cast(
+                    list[tuple["Node", "Node"]], list(permutations(arch.nodes, 2))
+                )
+            else:
+                coupling = arch.coupling
             link_errors = {
                 (n0, n1): {optype: get_link_error(n0, n1) for optype in multiqs}
-                for n0, n1 in arch.coupling
+                for n0, n1 in coupling
             }
 
             backend_info = BackendInfo(
