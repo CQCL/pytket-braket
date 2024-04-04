@@ -445,7 +445,7 @@ class BraketBackend(Backend):
 
         if (
             self._device_type == _DeviceType.QPU
-            and not paradigm["connectivity"]["fullyConnected"]
+            and not isinstance(arch, FullyConnected)
         ):
             self._req_preds.append(ConnectivityPredicate(arch))
 
@@ -520,7 +520,7 @@ class BraketBackend(Backend):
     @classmethod
     def _get_backend_info(
         cls,
-        arch: Architecture,
+        arch: Architecture | FullyConnected,
         device_name: str,
         singleqs: Set[OpType],
         multiqs: Set[OpType],
