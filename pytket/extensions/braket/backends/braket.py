@@ -443,9 +443,8 @@ class BraketBackend(Backend):
             MaxNQubitsPredicate(n_qubits),
         ]
 
-        if (
-            self._device_type == _DeviceType.QPU
-            and not isinstance(arch, FullyConnected)
+        if self._device_type == _DeviceType.QPU and not isinstance(
+            arch, FullyConnected
         ):
             self._req_preds.append(ConnectivityPredicate(arch))
 
