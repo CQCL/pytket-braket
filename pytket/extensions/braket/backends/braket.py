@@ -510,10 +510,13 @@ class BraketBackend(Backend):
         else:
             all_qubits = list(range(n_qubits))
 
+        arch: Architecture | FullyConnected
         if connectivity_graph is None:
             arch = FullyConnected(len(all_qubits))
-            return arch, all_qubits
-        arch = Architecture([(k, v) for k, l in connectivity_graph.items() for v in l])
+        else:
+            arch = Architecture(
+                [(k, v) for k, l in connectivity_graph.items() for v in l]
+            )
         return arch, all_qubits
 
     @classmethod
@@ -578,8 +581,12 @@ class BraketBackend(Backend):
 
             # Construct a fake coupling map if we have a FullyConnected architecture,
             # otherwise use the coupling provided by the Architecture class.
+            coupling: list[tuple[Node, Node]]
             if isinstance(arch, FullyConnected):
-                coupling = permutations(arch.nodes, 2)
+                # cast is necessary as mypy does not know that we passed 2 to `permutations`.
+                coupling = cast(
+                    list[tuple[Node, Node]], list(permutations(arch.nodes, 2))
+                )
             else:
                 coupling = arch.coupling
             link_errors = {
