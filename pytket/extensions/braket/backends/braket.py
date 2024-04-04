@@ -82,7 +82,7 @@ from pytket.predicates import (
     NoSymbolsPredicate,
     Predicate,
 )
-from pytket.architecture import Architecture
+from pytket.architecture import Architecture, FullyConnected
 from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
@@ -485,7 +485,7 @@ class BraketBackend(Backend):
     @staticmethod
     def _get_arch_info(
         device_properties: Dict[str, Any], device_type: _DeviceType
-    ) -> Tuple[Architecture, List[int]]:
+    ) -> Tuple[Architecture | FullyConnected, List[int]]:
         # return the architecture, and all_qubits
         paradigm = device_properties["paradigm"]
         n_qubits = paradigm["qubitCount"]
@@ -494,6 +494,8 @@ class BraketBackend(Backend):
             connectivity = paradigm["connectivity"]
             if connectivity["fullyConnected"]:
                 all_qubits: List = list(range(n_qubits))
+                arch = FullyConnected(len(all_qubits))
+                return arch, all_qubits
             else:
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
