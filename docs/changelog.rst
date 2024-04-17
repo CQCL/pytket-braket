@@ -1,6 +1,13 @@
 Changelog
 ~~~~~~~~~
 
+0.36.0 (April 2024)
+-------------------
+
+* Updated pytket version requirement to 1.27.
+* Devices with full connectivity will use the `FullyConnected` class
+  to represent their architecture.
+
 0.35.1 (March 2024)
 -------------------
 

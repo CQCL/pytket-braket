@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Cambridge Quantum Computing
+# Copyright 2019-2024 Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ from hypothesis import given, settings, strategies
 import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
-from pytket.architecture import Architecture
+from pytket.architecture import Architecture, FullyConnected
 from pytket.circuit import Circuit, OpType, Qubit, Bit
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.utils.expectations import (
@@ -160,9 +160,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
 
     # Device is fully connected
     arch = b.backend_info.architecture
-    assert isinstance(arch, Architecture)
-    n = len(arch.nodes)
-    assert len(arch.coupling) == n * (n - 1)
+    assert isinstance(arch, FullyConnected)
 
     chars = b.characterisation
     assert chars is not None
