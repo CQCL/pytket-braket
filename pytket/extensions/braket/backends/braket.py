@@ -540,9 +540,9 @@ class BraketBackend(Backend):
                     float, fid["1Q"]["mean"]
                 )
                 get_readout_error: Callable[["Node"], float] = lambda n: 0.0
-                get_link_error: Callable[
-                    ["Node", "Node"], float
-                ] = lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
+                get_link_error: Callable[["Node", "Node"], float] = (
+                    lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
+                )
             elif schema == RIGETTI_SCHEMA:
                 specs = characteristics["specs"]
                 specs1q, specs2q = specs["1Q"], specs["2Q"]
@@ -580,7 +580,10 @@ class BraketBackend(Backend):
                     float, props1q[f"{n.index[0]}"]["fRO"]
                 )
                 get_link_error = lambda n0, n1: 1.0 - cast(
-                    float, props2q[f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"]["fCZ"]
+                    float,
+                    props2q[
+                        f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
+                    ]["fCZ"],
                 )
             # readout error as symmetric 2x2 matrix
             to_sym_mat: Callable[[float], List[List[float]]] = lambda x: [
