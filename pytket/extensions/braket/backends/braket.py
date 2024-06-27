@@ -107,6 +107,10 @@ OQC_SCHEMA = {
     "name": "braket.device_schema.oqc.oqc_provider_properties",
     "version": "1",
 }
+IQM_SCHEMA = {
+    "name": "braket.device_schema.iqm.iqm_provider_properties",
+    "version": "1",
+}
 
 _gate_types = {
     "amplitude_damping": None,
@@ -293,7 +297,7 @@ class BraketBackend(Backend):
         :param s3_folder: name of folder ("key") in S3 bucket to store results in
         :param device_type: device type from device ARN (e.g. "qpu"),
             default: "quantum-simulator"
-        :param provider: provider name from device ARN (e.g. "ionq", "rigetti", "oqc",
+        :param provider: provider name from device ARN (e.g. "ionq", "rigetti", "oqc", "iqm",
             ...),
             default: "amazon"
         :param aws_session: braket AwsSession object, to pass credentials in if not
@@ -565,6 +569,18 @@ class BraketBackend(Backend):
                 )
                 get_link_error = lambda n0, n1: 1.0 - cast(
                     float, props2q[f"{n0.index[0]}-{n1.index[0]}"]["fCX"]
+                )
+            elif schema == IQM_SCHEMA:
+                properties = characteristics["properties"]
+                props1q, props2q = properties["one_qubit"], properties["two_qubit"]
+                get_node_error = lambda n: 1.0 - cast(
+                    float, props1q[f"{n.index[0]}"]["f1Q_simultaneous_RB"]
+                )
+                get_readout_error = lambda n: 1.0 - cast(
+                    float, props1q[f"{n.index[0]}"]["fRO"]
+                )
+                get_link_error = lambda n0, n1: 1.0 - cast(
+                    float, props2q[f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"]["fCZ"]
                 )
             # readout error as symmetric 2x2 matrix
             to_sym_mat: Callable[[float], List[List[float]]] = lambda x: [
