@@ -297,7 +297,7 @@ class BraketBackend(Backend):
         :param s3_folder: name of folder ("key") in S3 bucket to store results in
         :param device_type: device type from device ARN (e.g. "qpu"),
             default: "quantum-simulator"
-        :param provider: provider name from device ARN (e.g. "ionq", "rigetti", "oqc", "iqm",
+        :param provider: provider name from device ARN (e.g. "ionq", "rigetti", "oqc",
             ...),
             default: "amazon"
         :param aws_session: braket AwsSession object, to pass credentials in if not
