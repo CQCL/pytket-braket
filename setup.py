@@ -45,7 +45,7 @@ setup(
     install_requires=[
         "pytket ~= 1.27",
         "amazon-braket-sdk ~= 1.53",
-        "amazon-braket-schemas ~= 1.19",
+        "amazon-braket-schemas ~= 1.22",
         "amazon-braket-default-simulator ~= 1.20",
         "boto3-stubs",
     ],
