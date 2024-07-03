@@ -492,7 +492,6 @@ class BraketBackend(Backend):
     ) -> Tuple[Architecture | FullyConnected, List[int]]:
         # return the architecture, and all_qubits
         paradigm = device_properties["paradigm"]
-        schema = device_properties["provider"]["braketSchemaHeader"]
         n_qubits = paradigm["qubitCount"]
         connectivity_graph = None  # None means "fully connected"
         if device_type == _DeviceType.QPU:
@@ -500,6 +499,7 @@ class BraketBackend(Backend):
             if connectivity["fullyConnected"]:
                 all_qubits: List = list(range(n_qubits))
             else:
+                schema = device_properties["provider"]["braketSchemaHeader"]
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
                 if schema == IQM_SCHEMA:
