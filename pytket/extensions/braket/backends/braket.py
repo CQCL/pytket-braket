@@ -492,6 +492,7 @@ class BraketBackend(Backend):
     ) -> Tuple[Architecture | FullyConnected, List[int]]:
         # return the architecture, and all_qubits
         paradigm = device_properties["paradigm"]
+        schema = device_properties["provider"]["braketSchemaHeader"]
         n_qubits = paradigm["qubitCount"]
         connectivity_graph = None  # None means "fully connected"
         if device_type == _DeviceType.QPU:
@@ -501,16 +502,31 @@ class BraketBackend(Backend):
             else:
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
-                connectivity_graph = dict(
-                    (int(k), [int(v) for v in l]) for k, l in connectivity_graph.items()
-                )
-                # each connectivity graph key will be an int
-                # connectivity_graph values will be lists
-                all_qubits_set = set()
-                for k, v in connectivity_graph.items():
-                    all_qubits_set.add(k)
-                    all_qubits_set.update(v)
-                all_qubits = list(all_qubits_set)
+                if schema == IQM_SCHEMA:
+                    connectivity_graph = dict(
+                        (int(k) - 1, [int(v) - 1 for v in l])
+                        for k, l in connectivity_graph.items()
+                    )
+                    # each connectivity graph key will be an int
+                    # connectivity_graph values will be lists
+                    all_qubits_set = set()
+                    for k, v in connectivity_graph.items():
+                        all_qubits_set.add(k - 1)
+                        for l in v:
+                            all_qubits_set.add(l - 1)
+                    all_qubits = list(all_qubits_set)
+                else:
+                    connectivity_graph = dict(
+                        (int(k), [int(v) for v in l])
+                        for k, l in connectivity_graph.items()
+                    )
+                    # each connectivity graph key will be an int
+                    # connectivity_graph values will be lists
+                    all_qubits_set = set()
+                    for k, v in connectivity_graph.items():
+                        all_qubits_set.add(k)
+                        all_qubits_set.update(v)
+                    all_qubits = list(all_qubits_set)
         else:
             all_qubits = list(range(n_qubits))
 
@@ -572,7 +588,17 @@ class BraketBackend(Backend):
                 )
             elif schema == IQM_SCHEMA:
                 properties = characteristics["properties"]
-                props1q, props2q = properties["one_qubit"], properties["two_qubit"]
+                props1q = {}
+                for key in properties["one_qubit"].keys():
+                    node1q = str(int(key) - 1)
+                    props1q[node1q] = properties["one_qubit"][key]
+                props2q = {}
+                for key in properties["two_qubit"].keys():
+                    ind = key.index("-")
+                    node2q1, node2q2 = str(int(key[:ind]) - 1), str(
+                        int(key[ind + 1 :]) - 1
+                    )
+                    props2q[node2q1 + "-" + node2q2] = properties["two_qubit"][key]
                 get_node_error = lambda n: 1.0 - cast(
                     float, props1q[f"{n.index[0]}"]["f1Q_simultaneous_RB"]
                 )
@@ -585,6 +611,7 @@ class BraketBackend(Backend):
                         f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
                     ]["fCZ"],
                 )
+
             # readout error as symmetric 2x2 matrix
             to_sym_mat: Callable[[float], List[List[float]]] = lambda x: [
                 [1.0 - x, x],
