@@ -422,7 +422,6 @@ class BraketBackend(Backend):
             self._characteristics,
         )
 
-        paradigm = props["paradigm"]
         n_qubits = len(self._all_qubits)
 
         self._supports_client_qubit_mapping = (

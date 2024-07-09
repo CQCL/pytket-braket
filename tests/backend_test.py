@@ -20,7 +20,7 @@ from hypothesis import given, settings, strategies
 import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
-from pytket.architecture import Architecture, FullyConnected
+from pytket.architecture import FullyConnected
 from pytket.circuit import Circuit, OpType, Qubit, Bit
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.utils.expectations import (
