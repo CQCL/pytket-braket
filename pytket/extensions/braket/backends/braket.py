@@ -422,7 +422,6 @@ class BraketBackend(Backend):
             self._characteristics,
         )
 
-        paradigm = props["paradigm"]
         n_qubits = len(self._all_qubits)
 
         self._supports_client_qubit_mapping = (
@@ -556,9 +555,9 @@ class BraketBackend(Backend):
                     float, fid["1Q"]["mean"]
                 )
                 get_readout_error: Callable[["Node"], float] = lambda n: 0.0
-                get_link_error: Callable[
-                    ["Node", "Node"], float
-                ] = lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
+                get_link_error: Callable[["Node", "Node"], float] = (
+                    lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
+                )
             elif schema == RIGETTI_SCHEMA:
                 specs = characteristics["specs"]
                 specs1q, specs2q = specs["1Q"], specs["2Q"]
