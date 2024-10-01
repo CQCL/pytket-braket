@@ -1,6 +1,8 @@
-# Build the docs. Ensure we have the correct project title.
-sphinx-build -b html -D html_title="$EXTENSION_NAME" . build 
-# Remove copied files. This ensures reusability.
-rm -r _static 
-rm -r quantinuum-sphinx
-rm conf.py
+# Copy over poetry dependencies from theming repository
+cp pytket-docs-theming/extensions/pyproject.toml .
+cp pytket-docs-theming/extensions/poetry.lock .
+
+# Install the docs dependencies. Creates a .venv directory in docs
+poetry install
+
+# NOTE: Editable wheel should be installed separately.
