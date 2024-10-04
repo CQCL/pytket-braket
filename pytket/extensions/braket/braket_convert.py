@@ -16,7 +16,7 @@
 """
 
 from typing import (
-    cast,
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -24,9 +24,11 @@ from typing import (
     Optional,
     Tuple,
     TypeVar,
-    TYPE_CHECKING,
+    cast,
 )
+
 from numpy import pi
+
 from braket.circuits import Circuit as BK_Circuit  # type: ignore
 from pytket.circuit import Circuit, OpType, Qubit
 

@@ -13,19 +13,21 @@
 # limitations under the License.
 
 import json
+import os
 from collections import Counter
 from typing import cast
-import os
-from hypothesis import given, settings, strategies
+
 import numpy as np
 import pytest
-from pytket.extensions.braket import BraketBackend
+from hypothesis import given, settings, strategies
+
 from pytket.architecture import FullyConnected
-from pytket.circuit import Circuit, OpType, Qubit, Bit
+from pytket.circuit import Bit, Circuit, OpType, Qubit
+from pytket.extensions.braket import BraketBackend
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.utils.expectations import (
-    get_pauli_expectation_value,
     get_operator_expectation_value,
+    get_pauli_expectation_value,
 )
 from pytket.utils.operators import QubitPauliOperator
 

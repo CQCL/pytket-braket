@@ -12,67 +12,70 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from itertools import permutations
 import json
-import warnings
-from enum import Enum
 import time
+import warnings
+from collections.abc import Iterable, Sequence
+from enum import Enum
+from itertools import permutations
 from typing import (
-    cast,
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
-    Iterable,
     List,
     Optional,
-    Sequence,
-    Union,
-    Tuple,
     Set,
-    TYPE_CHECKING,
+    Tuple,
+    Union,
+    cast,
 )
 from uuid import uuid4
+
+import boto3
+import numpy as np
+
 import braket  # type: ignore
+import braket.circuits  # type: ignore
 from braket.aws import AwsDevice, AwsSession  # type: ignore
 from braket.aws.aws_device import AwsDeviceType  # type: ignore
 from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
-import braket.circuits  # type: ignore
 from braket.circuits.observable import Observable  # type: ignore
 from braket.circuits.qubit_set import QubitSet  # type: ignore
 from braket.circuits.result_type import ResultType  # type: ignore
 from braket.device_schema import DeviceActionType  # type: ignore
 from braket.devices import LocalSimulator  # type: ignore
 from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
-import boto3
-import numpy as np
+from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
-from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backend_exceptions import CircuitNotRunError
+from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.extensions.braket.braket_convert import (
-    tk_to_braket,
-    get_avg_characterisation,
-)
-from pytket.extensions.braket._metadata import __extension_version__
 from pytket.circuit import Circuit, OpType
+from pytket.circuit_library import TK1_to_RzRx
+from pytket.extensions.braket._metadata import __extension_version__
+from pytket.extensions.braket.braket_convert import (
+    get_avg_characterisation,
+    tk_to_braket,
+)
 from pytket.passes import (
     BasePass,
+    CliffordSimp,
     CXMappingPass,
+    DecomposeBoxes,
+    FullPeepholeOptimise,
+    NaivePlacementPass,
     RebaseCustom,
     RemoveRedundancies,
     SequencePass,
-    SynthesiseTket,
-    FullPeepholeOptimise,
-    CliffordSimp,
-    SquashCustom,
-    DecomposeBoxes,
     SimplifyInitial,
-    NaivePlacementPass,
+    SquashCustom,
+    SynthesiseTket,
 )
-from pytket.circuit_library import TK1_to_RzRx
 from pytket.pauli import Pauli, QubitPauliString
+from pytket.placement import NoiseAwarePlacement
 from pytket.predicates import (
     ConnectivityPredicate,
     GateSetPredicate,
@@ -83,8 +86,6 @@ from pytket.predicates import (
     NoSymbolsPredicate,
     Predicate,
 )
-from pytket.architecture import Architecture, FullyConnected
-from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.outcomearray import OutcomeArray
@@ -551,11 +552,11 @@ class BraketBackend(Backend):
             schema = characteristics["braketSchemaHeader"]
             if schema == IONQ_SCHEMA:
                 fid = characteristics["fidelity"]
-                get_node_error: Callable[["Node"], float] = lambda n: 1.0 - cast(
+                get_node_error: Callable[[Node], float] = lambda n: 1.0 - cast(
                     float, fid["1Q"]["mean"]
                 )
-                get_readout_error: Callable[["Node"], float] = lambda n: 0.0
-                get_link_error: Callable[["Node", "Node"], float] = (
+                get_readout_error: Callable[[Node], float] = lambda n: 0.0
+                get_link_error: Callable[[Node, Node], float] = (
                     lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
                 )
             elif schema == RIGETTI_SCHEMA:
@@ -626,7 +627,7 @@ class BraketBackend(Backend):
 
             # Construct a fake coupling map if we have a FullyConnected architecture,
             # otherwise use the coupling provided by the Architecture class.
-            coupling: list[tuple["Node", "Node"]]
+            coupling: list[tuple[Node, Node]]
             if isinstance(arch, FullyConnected):
                 # cast is needed as mypy does not know that we passed a fixed
                 # integer to `permutations`.
