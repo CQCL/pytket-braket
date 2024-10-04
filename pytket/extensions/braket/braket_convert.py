@@ -242,9 +242,9 @@ def get_avg_characterisation(
     K = TypeVar("K")
     V1 = TypeVar("V1")
     V2 = TypeVar("V2")
-    Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
+    map_values_t = Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
 
-    def map_values(f, d):
+    def map_values(f, d) -> map_values_t:
         return {k: f(v) for k, v in d.items()}
 
     node_errors = cast(
