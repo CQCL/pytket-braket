@@ -228,7 +228,7 @@ def _get_result(
             m = result.get_value_by_result_type(
                 ResultType.DensityMatrix(target=target_qubits)
             )
-            if type(completed_task) == AwsQuantumTask:
+            if type(completed_task) is AwsQuantumTask:
                 kwargs["density_matrix"] = np.array(
                     [[complex(x, y) for x, y in row] for row in m], dtype=complex
                 )
@@ -495,21 +495,21 @@ class BraketBackend(Backend):
                 # Convert strings to ints
                 if schema == IQM_SCHEMA:
                     connectivity_graph = dict(
-                        (int(k) - 1, [int(v) - 1 for v in l])
-                        for k, l in connectivity_graph.items()
+                        (int(k) - 1, [int(v) - 1 for v in le])
+                        for k, le in connectivity_graph.items()
                     )
                     # each connectivity graph key will be an int
                     # connectivity_graph values will be lists
                     all_qubits_set = set()
                     for k, v in connectivity_graph.items():
                         all_qubits_set.add(k - 1)
-                        for l in v:
-                            all_qubits_set.add(l - 1)
+                        for le in v:
+                            all_qubits_set.add(le - 1)
                     all_qubits = list(all_qubits_set)
                 else:
                     connectivity_graph = dict(
-                        (int(k), [int(v) for v in l])
-                        for k, l in connectivity_graph.items()
+                        (int(k), [int(v) for v in le])
+                        for k, le in connectivity_graph.items()
                     )
                     # each connectivity graph key will be an int
                     # connectivity_graph values will be lists
@@ -526,7 +526,7 @@ class BraketBackend(Backend):
             arch = FullyConnected(len(all_qubits))
         else:
             arch = Architecture(
-                [(k, v) for k, l in connectivity_graph.items() for v in l]
+                [(k, v) for k, le in connectivity_graph.items() for v in le]
             )
         return arch, all_qubits
 
@@ -567,7 +567,8 @@ class BraketBackend(Backend):
                     return 1.0 - cast(
                         float,
                         specs2q[
-                            f"{min(n0.index[0], n1.index[0])}-{max(n0.index[0], n1.index[0])}"
+                            f"{min(n0.index[0], n1.index[0])}\
+-{max(n0.index[0], n1.index[0])}"
                         ].get("fCZ", 1.0),
                     )
 
@@ -612,7 +613,8 @@ class BraketBackend(Backend):
                     return 1.0 - cast(
                         float,
                         props2q[
-                            f"{min(n0.index[0], n1.index[0])}-{max(n0.index[0], n1.index[0])}"
+                            f"{min(n0.index[0], n1.index[0])}\
+-{max(n0.index[0], n1.index[0])}"
                         ]["fCZ"],
                     )
 
