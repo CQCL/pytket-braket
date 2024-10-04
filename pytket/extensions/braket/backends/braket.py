@@ -557,13 +557,13 @@ class BraketBackend(Backend):
                 specs = characteristics["specs"]
                 specs1q, specs2q = specs["1Q"], specs["2Q"]
 
-                def get_node_error(n):
+                def get_node_error(n: Node) -> float:
                     return 1.0 - cast(float, specs1q[f"{n.index[0]}"].get("f1QRB", 1.0))
 
-                def get_readout_error(n):
+                def get_readout_error(n: Node) -> float:
                     return 1.0 - cast(float, specs1q[f"{n.index[0]}"].get("fRO", 1.0))
 
-                def get_link_error(n0, n1):
+                def get_link_error(n0: Node, n1: Node) -> float:
                     return 1.0 - cast(
                         float,
                         specs2q[
