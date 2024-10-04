@@ -13,8 +13,9 @@
 # limitations under the License.
 
 import pytest
-from pytket.extensions.braket import braket_to_tk, tk_to_braket
+
 from pytket.circuit import Circuit, OpType
+from pytket.extensions.braket import braket_to_tk, tk_to_braket
 
 
 def test_convert() -> None:
