@@ -19,14 +19,8 @@ from collections.abc import Iterable, Sequence
 from enum import Enum
 from itertools import permutations
 from typing import (
-    TYPE_CHECKING,
     Any,
-    Callable,
-    Dict,
-    List,
     Optional,
-    Set,
-    Tuple,
     Union,
     cast,
 )
@@ -53,7 +47,7 @@ from pytket.backends.backend_exceptions import CircuitNotRunError
 from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.circuit import Circuit, OpType
+from pytket.circuit import Circuit, Node, OpType
 from pytket.circuit_library import TK1_to_RzRx
 from pytket.extensions.braket._metadata import __extension_version__
 from pytket.extensions.braket.braket_convert import (
@@ -91,9 +85,6 @@ from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.outcomearray import OutcomeArray
 
 from .config import BraketConfig
-
-if TYPE_CHECKING:
-    from pytket.circuit import Node
 
 # Known schemas for noise characteristics
 IONQ_SCHEMA = {
@@ -197,7 +188,7 @@ _observables = {
 
 def _obs_from_qps(
     circuit: Circuit, pauli: QubitPauliString
-) -> Tuple[Observable, QubitSet]:
+) -> tuple[Observable, QubitSet]:
     obs, qbs = [], []
     for q, p in pauli.map.items():
         obs.append(_observables[p])
@@ -212,12 +203,12 @@ def _obs_from_qpo(operator: QubitPauliOperator, n_qubits: int) -> Observable:
 
 def _get_result(
     completed_task: Union[AwsQuantumTask, LocalQuantumTask],
-    target_qubits: List[int],
-    measures: Dict[int, int],
+    target_qubits: list[int],
+    measures: dict[int, int],
     want_state: bool,
     want_dm: bool,
     ppcirc: Optional[Circuit] = None,
-) -> Dict[str, BackendResult]:
+) -> dict[str, BackendResult]:
     """Get a result from a completed task.
 
     :param completed_task: braket task
@@ -412,7 +403,7 @@ class BraketBackend(Backend):
         )
 
         arch, self._all_qubits = self._get_arch_info(props, self._device_type)
-        self._characteristics: Optional[Dict] = None
+        self._characteristics: Optional[dict] = None
         if self._device_type == _DeviceType.QPU:
             self._characteristics = props["provider"]
         self._backend_info = self._get_backend_info(
@@ -464,8 +455,8 @@ class BraketBackend(Backend):
 
     @staticmethod
     def _get_gate_set(
-        supported_ops: Set[str], device_type: _DeviceType
-    ) -> Tuple[Set[OpType], Set[OpType]]:
+        supported_ops: set[str], device_type: _DeviceType
+    ) -> tuple[set[OpType], set[OpType]]:
         multiqs = set()
         singleqs = set()
         if not {"cnot", "rx", "rz", "x"} <= supported_ops:
@@ -488,8 +479,8 @@ class BraketBackend(Backend):
 
     @staticmethod
     def _get_arch_info(
-        device_properties: Dict[str, Any], device_type: _DeviceType
-    ) -> Tuple[Architecture | FullyConnected, List[int]]:
+        device_properties: dict[str, Any], device_type: _DeviceType
+    ) -> tuple[Architecture | FullyConnected, list[int]]:
         # return the architecture, and all_qubits
         paradigm = device_properties["paradigm"]
         n_qubits = paradigm["qubitCount"]
@@ -497,7 +488,7 @@ class BraketBackend(Backend):
         if device_type == _DeviceType.QPU:
             connectivity = paradigm["connectivity"]
             if connectivity["fullyConnected"]:
-                all_qubits: List = list(range(n_qubits))
+                all_qubits: list = list(range(n_qubits))
             else:
                 schema = device_properties["provider"]["braketSchemaHeader"]
                 connectivity_graph = connectivity["connectivityGraph"]
@@ -544,79 +535,91 @@ class BraketBackend(Backend):
         cls,
         arch: Architecture | FullyConnected,
         device_name: str,
-        singleqs: Set[OpType],
-        multiqs: Set[OpType],
-        characteristics: Optional[Dict[str, Any]],
+        singleqs: set[OpType],
+        multiqs: set[OpType],
+        characteristics: Optional[dict[str, Any]],
     ) -> BackendInfo:
         if characteristics is not None:
             schema = characteristics["braketSchemaHeader"]
             if schema == IONQ_SCHEMA:
                 fid = characteristics["fidelity"]
-                get_node_error: Callable[[Node], float] = lambda n: 1.0 - cast(
-                    float, fid["1Q"]["mean"]
-                )
-                get_readout_error: Callable[[Node], float] = lambda n: 0.0
-                get_link_error: Callable[[Node, Node], float] = (
-                    lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
-                )
+
+                def get_node_error(n: Node) -> float:
+                    return 1.0 - cast(float, fid["1Q"]["mean"])
+
+                def get_readout_error(n: Node) -> float:
+                    return 0.0
+
+                def get_link_error(n0: Node, n1: Node) -> float:
+                    return 1.0 - cast(float, fid["2Q"]["mean"])
+
             elif schema == RIGETTI_SCHEMA:
                 specs = characteristics["specs"]
                 specs1q, specs2q = specs["1Q"], specs["2Q"]
-                get_node_error = lambda n: 1.0 - cast(
-                    float, specs1q[f"{n.index[0]}"].get("f1QRB", 1.0)
-                )
-                get_readout_error = lambda n: 1.0 - cast(
-                    float, specs1q[f"{n.index[0]}"].get("fRO", 1.0)
-                )
-                get_link_error = lambda n0, n1: 1.0 - cast(
-                    float,
-                    specs2q[
-                        f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
-                    ].get("fCZ", 1.0),
-                )
+
+                def get_node_error(n):
+                    return 1.0 - cast(float, specs1q[f"{n.index[0]}"].get("f1QRB", 1.0))
+
+                def get_readout_error(n):
+                    return 1.0 - cast(float, specs1q[f"{n.index[0]}"].get("fRO", 1.0))
+
+                def get_link_error(n0, n1):
+                    return 1.0 - cast(
+                        float,
+                        specs2q[
+                            f"{min(n0.index[0], n1.index[0])}-{max(n0.index[0], n1.index[0])}"
+                        ].get("fCZ", 1.0),
+                    )
+
             elif schema == OQC_SCHEMA:
                 properties = characteristics["properties"]
                 props1q, props2q = properties["one_qubit"], properties["two_qubit"]
-                get_node_error = lambda n: 1.0 - cast(
-                    float, props1q[f"{n.index[0]}"]["fRB"]
-                )
-                get_readout_error = lambda n: 1.0 - cast(
-                    float, props1q[f"{n.index[0]}"]["fRO"]
-                )
-                get_link_error = lambda n0, n1: 1.0 - cast(
-                    float, props2q[f"{n0.index[0]}-{n1.index[0]}"]["fCX"]
-                )
+
+                def get_node_error(n):
+                    return 1.0 - cast(float, props1q[f"{n.index[0]}"]["fRB"])
+
+                def get_readout_error(n):
+                    return 1.0 - cast(float, props1q[f"{n.index[0]}"]["fRO"])
+
+                def get_link_error(n0, n1):
+                    return 1.0 - cast(
+                        float, props2q[f"{n0.index[0]}-{n1.index[0]}"]["fCX"]
+                    )
+
             elif schema == IQM_SCHEMA:
                 properties = characteristics["properties"]
                 props1q = {}
-                for key in properties["one_qubit"].keys():
+                for key in properties["one_qubit"]:
                     node1q = str(int(key) - 1)
                     props1q[node1q] = properties["one_qubit"][key]
                 props2q = {}
-                for key in properties["two_qubit"].keys():
+                for key in properties["two_qubit"]:
                     ind = key.index("-")
                     node2q1, node2q2 = str(int(key[:ind]) - 1), str(
                         int(key[ind + 1 :]) - 1
                     )
                     props2q[node2q1 + "-" + node2q2] = properties["two_qubit"][key]
-                get_node_error = lambda n: 1.0 - cast(
-                    float, props1q[f"{n.index[0]}"]["f1Q_simultaneous_RB"]
-                )
-                get_readout_error = lambda n: 1.0 - cast(
-                    float, props1q[f"{n.index[0]}"]["fRO"]
-                )
-                get_link_error = lambda n0, n1: 1.0 - cast(
-                    float,
-                    props2q[
-                        f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
-                    ]["fCZ"],
-                )
+
+                def get_node_error(n):
+                    return 1.0 - cast(
+                        float, props1q[f"{n.index[0]}"]["f1Q_simultaneous_RB"]
+                    )
+
+                def get_readout_error(n):
+                    return 1.0 - cast(float, props1q[f"{n.index[0]}"]["fRO"])
+
+                def get_link_error(n0, n1):
+                    return 1.0 - cast(
+                        float,
+                        props2q[
+                            f"{min(n0.index[0], n1.index[0])}-{max(n0.index[0], n1.index[0])}"
+                        ]["fCZ"],
+                    )
 
             # readout error as symmetric 2x2 matrix
-            to_sym_mat: Callable[[float], List[List[float]]] = lambda x: [
-                [1.0 - x, x],
-                [x, 1.0 - x],
-            ]
+            def to_sym_mat(x: float) -> list[list[float]]:
+                return [[1.0 - x, x], [x, 1.0 - x]]
+
             node_errors = {
                 node: {optype: get_node_error(node) for optype in singleqs}
                 for node in arch.nodes
@@ -662,7 +665,7 @@ class BraketBackend(Backend):
         return backend_info
 
     @property
-    def required_predicates(self) -> List[Predicate]:
+    def required_predicates(self) -> list[Predicate]:
         return self._req_preds
 
     def rebase_pass(self) -> BasePass:
@@ -735,7 +738,7 @@ class BraketBackend(Backend):
 
     def _to_bkcirc(
         self, circuit: Circuit
-    ) -> Tuple[braket.circuits.Circuit, List[int], Dict[int, int]]:
+    ) -> tuple[braket.circuits.Circuit, list[int], dict[int, int]]:
         return tk_to_braket(
             circuit,
             mapped_qubits=(self._device_type == _DeviceType.QPU),
@@ -756,7 +759,7 @@ class BraketBackend(Backend):
         n_shots: Union[None, int, Sequence[Optional[int]]] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
+    ) -> list[ResultHandle]:
         """
         Supported `kwargs`:
         - `postprocess`: apply end-of-circuit simplifications and classical
@@ -847,7 +850,7 @@ class BraketBackend(Backend):
         return handles
 
     def _update_cache_result(
-        self, handle: ResultHandle, result_dict: Dict[str, BackendResult]
+        self, handle: ResultHandle, result_dict: dict[str, BackendResult]
     ) -> None:
         if handle in self._cache:
             self._cache[handle].update(result_dict)
@@ -888,7 +891,7 @@ class BraketBackend(Backend):
             return CircuitStatus(StatusEnum.ERROR, f"Unrecognized state '{state}'")
 
     @property
-    def characterisation(self) -> Optional[Dict[str, Any]]:
+    def characterisation(self) -> Optional[dict[str, Any]]:
         node_errors = self._backend_info.all_node_gate_errors
         edge_errors = self._backend_info.all_edge_gate_errors
         readout_errors = self._backend_info.all_readout_errors
@@ -905,7 +908,7 @@ class BraketBackend(Backend):
         return self._backend_info
 
     @classmethod
-    def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
+    def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
         """
         See :py:meth:`pytket.backends.Backend.available_devices`.
         Supported kwargs:
@@ -1205,10 +1208,10 @@ class BraketBackend(Backend):
     def get_amplitudes(
         self,
         circuit: Circuit,
-        states: List[str],
+        states: list[str],
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> Dict[str, complex]:
+    ) -> dict[str, complex]:
         """
         Compute the complex coefficients of the final state.
 

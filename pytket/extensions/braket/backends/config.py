@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, Optional, Type
+from typing import Any, ClassVar, Optional
 
 from pytket.config import PytketExtConfig
 
@@ -31,7 +31,7 @@ class BraketConfig(PytketExtConfig):
 
     @classmethod
     def from_extension_dict(
-        cls: Type["BraketConfig"], ext_dict: Dict[str, Any]
+        cls: type["BraketConfig"], ext_dict: dict[str, Any]
     ) -> "BraketConfig":
         return cls(
             ext_dict.get("s3_bucket"),
