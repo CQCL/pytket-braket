@@ -29,7 +29,7 @@ jobs:
     name: Braket - Build and test module
     strategy:
       matrix:
-        os: ['ubuntu-22.04', 'macos-12', 'windows-2022']
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -52,13 +52,13 @@ jobs:
       with:
         python-version: '3.11'
     - name: Build and test including remote checks (3.11) mypy
-      if:  (matrix.os == 'macos-12') && ((github.event_name == 'pull_request' &&  github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel') || github.event_name == 'schedule')
+      if:  (matrix.os == 'macos-latest') && ((github.event_name == 'pull_request' &&  github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel') || github.event_name == 'schedule')
       run: |
         ./.github/workflows/build-test mypy numpy
       env:
         PYTKET_RUN_REMOTE_TESTS: 1
     - name: Build and test including remote checks (3.11) nomypy
-      if:  (matrix.os != 'macos-12') && (github.event_name == 'push' || (github.event_name == 'pull_request' &&  github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'release' || github.event_name == 'schedule')
+      if:  (matrix.os != 'macos-latest') && (github.event_name == 'push' || (github.event_name == 'pull_request' &&  github.event.pull_request.head.repo.full_name == github.repository) || github.event_name == 'release' || github.event_name == 'schedule')
       shell: bash
       run: |
         ./.github/workflows/build-test nomypy numpy
@@ -70,7 +70,7 @@ jobs:
       with:
         python-version: '3.12'
     - name: Build and test (3.12) - macos and ubuntu
-      if: (matrix.os != 'windows-2022') && (github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'schedule')
+      if: (matrix.os != 'windows-latest') && (github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'schedule')
       shell: bash
       run: |
         ./.github/workflows/build-test nomypy numpy
@@ -82,13 +82,13 @@ jobs:
     - name: install poetry
       run: pip install poetry
     - name: Install docs dependencies
-      if:  (matrix.os == 'ubuntu-22.04') && (github.event_name == 'pull_request')
+      if:  (matrix.os == 'ubuntu-latest') && (github.event_name == 'pull_request')
       run: |
         cd docs
         bash ./install.sh
         for w in `find wheelhouse/ -type f -name "*.whl"` ; do poetry install $w ; done
     - name: Build docs
-      if:  (matrix.os == 'ubuntu-22.04') && (github.event_name == 'pull_request')
+      if:  (matrix.os == 'ubuntu-latest') && (github.event_name == 'pull_request')
       timeout-minutes: 20
       run: |
         cd docs
@@ -98,7 +98,7 @@ jobs:
     name: Publish to pypi
     if: github.event_name == 'release'
     needs: braket-checks
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: Download all wheels
       # downloading all three files into the wheelhouse
@@ -123,7 +123,7 @@ jobs:
     name: Build docs
     if: github.event_name == 'release'
     needs: publish_to_pypi
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
