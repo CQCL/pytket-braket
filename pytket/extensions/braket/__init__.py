@@ -16,7 +16,7 @@
 """
 
 # _metadata.py is copied to the folder after installation.
-from ._metadata import __extension_version__, __extension_name__
-from .braket_convert import tk_to_braket, braket_to_tk
+from ._metadata import __extension_name__, __extension_version__
 from .backends import BraketBackend
 from .backends.config import BraketConfig, set_braket_config
+from .braket_convert import braket_to_tk, tk_to_braket
