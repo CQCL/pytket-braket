@@ -138,6 +138,7 @@ _gate_types = {
     "phase_damping": None,
     "phase_flip": None,
     "phaseshift": OpType.U1,
+    "prx": None,
     "rx": OpType.Rx,
     "ry": OpType.Ry,
     "rz": OpType.Rz,
