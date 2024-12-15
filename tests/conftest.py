@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
 import os
-import pytest
+from typing import Optional
+
 import boto3
-from braket.aws.aws_session import AwsSession  # type: ignore
+import pytest
 from _pytest.fixtures import SubRequest
+from braket.aws.aws_session import AwsSession  # type: ignore
+
 from pytket.extensions.braket import BraketBackend
 
 
