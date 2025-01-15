@@ -3,6 +3,11 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+Remove code related to OQC devices (no longer supported on AWS Braket).
+
 0.38.0 (October 2024)
 ---------------------
 
