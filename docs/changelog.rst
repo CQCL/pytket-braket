@@ -3,10 +3,11 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.39.0 (January 2025)
+---------------------
 
-Remove code related to OQC devices (no longer supported on AWS Braket).
+* Updated pytket version requirement to 1.39.
+* Remove code related to OQC devices (no longer supported on AWS Braket).
 
 0.38.0 (October 2024)
 ---------------------
