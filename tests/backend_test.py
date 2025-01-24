@@ -127,7 +127,7 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     c.measure_all()
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 1)
-    res = b.get_result(h)
+    res = b.get_result(h, timeout=200)
     readout = res.get_shots()[0]
     assert readout[1] == readout[2]
 
