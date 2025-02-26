@@ -101,7 +101,7 @@ IONQ_SCHEMA = {
 }
 RIGETTI_SCHEMA = {
     "name": "braket.device_schema.rigetti.rigetti_provider_properties",
-    "version": "1",
+    "version": "2",
 }
 IQM_SCHEMA = {
     "name": "braket.device_schema.iqm.iqm_provider_properties",
@@ -510,7 +510,7 @@ class BraketBackend(Backend):
                         for l in v:
                             all_qubits_set.add(l - 1)
                     all_qubits = list(all_qubits_set)
-                else:
+                elif schema == RIGETTI_SCHEMA:
                     connectivity_graph = dict(
                         (int(k), [int(v) for v in l])
                         for k, l in connectivity_graph.items()
@@ -522,6 +522,8 @@ class BraketBackend(Backend):
                         all_qubits_set.add(k)
                         all_qubits_set.update(v)
                     all_qubits = list(all_qubits_set)
+                else:
+                    raise ValueError(f"Unsupported device property {schema}")
         else:
             all_qubits = list(range(n_qubits))
 
@@ -556,18 +558,31 @@ class BraketBackend(Backend):
                 )
             elif schema == RIGETTI_SCHEMA:
                 specs = characteristics["specs"]
-                specs1q, specs2q = specs["1Q"], specs["2Q"]
+                benchmarks = specs["benchmarks"]
+                instructions = specs["instructions"]
+                specs1qrb = {}
+                for benchmark in benchmarks[0]["sites"]:
+                    node1q = str(benchmark["node_ids"])
+                    specs1qrb[node1q] = benchmark["characteristics"][0]["error"]
+                specs1qro = {}
+                for instruction in instructions[3]["sites"]:
+                    node1q = str(instruction["node_ids"])
+                    specs1qro[node1q] = instruction["characteristics"][0]["value"]
+                specs2q = {}
+                for instruction in instructions[5]["sites"]:
+                    node2q = str(instruction["node_ids"])
+                    specs2q[node2q] = instruction["characteristics"][0]["error"]
                 get_node_error = lambda n: 1.0 - cast(
-                    float, specs1q[f"{n.index[0]}"].get("f1QRB", 1.0)
+                    float, specs1qrb[f"[{n.index[0]}]"]
                 )
                 get_readout_error = lambda n: 1.0 - cast(
-                    float, specs1q[f"{n.index[0]}"].get("fRO", 1.0)
+                    float, specs1qro[f"[{n.index[0]}]"]
                 )
                 get_link_error = lambda n0, n1: 1.0 - cast(
                     float,
                     specs2q[
-                        f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
-                    ].get("fCZ", 1.0),
+                        f"[{min(n0.index[0],n1.index[0])}, {max(n0.index[0],n1.index[0])}]"
+                    ],
                 )
             elif schema == IQM_SCHEMA:
                 properties = characteristics["properties"]
