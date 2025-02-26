@@ -572,13 +572,11 @@ class BraketBackend(Backend):
                 for instruction in instructions[5]["sites"]:
                     node2q = str(instruction["node_ids"])
                     specs2q[node2q] = instruction["characteristics"][0]["error"]
-                get_node_error = lambda n: 1.0 - cast(
-                    float, specs1qrb[f"[{n.index[0]}]"]
-                )
+                get_node_error = lambda n: cast(float, specs1qrb[f"[{n.index[0]}]"])
                 get_readout_error = lambda n: 1.0 - cast(
                     float, specs1qro[f"[{n.index[0]}]"]
                 )
-                get_link_error = lambda n0, n1: 1.0 - cast(
+                get_link_error = lambda n0, n1: cast(
                     float,
                     specs2q[
                         f"[{min(n0.index[0],n1.index[0])}, {max(n0.index[0],n1.index[0])}]"
