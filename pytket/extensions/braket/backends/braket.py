@@ -579,7 +579,8 @@ class BraketBackend(Backend):
                 get_link_error = lambda n0, n1: cast(
                     float,
                     specs2q[
-                        f"[{min(n0.index[0],n1.index[0])},{max(n0.index[0],n1.index[0])}]"
+                        f"[{min(n0.index[0],n1.index[0])}, "
+                        f"{max(n0.index[0],n1.index[0])}]"
                     ],
                 )
             elif schema == IQM_SCHEMA:
