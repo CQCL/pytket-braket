@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module for conversion from tket to braket
-"""
+"""Module for conversion from tket to braket"""
 
 # _metadata.py is copied to the folder after installation.
 from ._metadata import __extension_version__, __extension_name__

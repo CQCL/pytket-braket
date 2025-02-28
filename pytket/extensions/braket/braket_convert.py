@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Conversion from tket to braket
-"""
+"""Conversion from tket to braket"""
 
 from typing import (
     cast,
@@ -231,7 +230,7 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:
 
 
 def get_avg_characterisation(
-    characterisation: Dict[str, Any]
+    characterisation: Dict[str, Any],
 ) -> Dict[str, Dict["Node", float]]:
     """
     Convert gate-specific characterisation into readout, one- and two-qubit errors
