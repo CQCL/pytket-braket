@@ -140,13 +140,19 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
             "device_type": "qpu",
             "region": "us-east-1",
             "provider": "ionq",
-            "device": "Harmony",
+            "device": "Aria-1",
         },
         {
             "device_type": "qpu",
             "region": "us-east-1",
             "provider": "ionq",
-            "device": "Aria-1",
+            "device": "Aria-2",
+        },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Forte-1",
         },
     ],
     indirect=True,
@@ -204,7 +210,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-3",
+            "device": "Ankaa-3",
             "region": "us-west-1",
         }
     ],
@@ -249,7 +255,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-3",
+            "device": "Ankaa-3",
             "region": "us-west-1",
         }
     ],
@@ -528,7 +534,7 @@ def test_shots_bits_edgecases(n_shots: int, n_bits: int) -> None:
             "device_type": "qpu",
             "region": "us-east-1",
             "provider": "ionq",
-            "device": "Harmony",
+            "device": "Aria-1",
         }
     ],
     indirect=True,
@@ -606,7 +612,7 @@ def test_multiple_indices() -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-3",
+            "device": "Ankaa-3",
             "region": "us-west-1",
         }
     ],
