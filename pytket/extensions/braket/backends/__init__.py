@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Backends for processing pytket circuits via Amazon Braket
-"""
+"""Backends for processing pytket circuits via Amazon Braket"""
 
 from .braket import BraketBackend
