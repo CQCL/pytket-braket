@@ -580,7 +580,7 @@ class BraketBackend(Backend):
                     float,
                     specs2q[
                         f"[{min(n0.index[0],n1.index[0])}, "
-                        f"{max(n0.index[0],n1.index[0])}]"
+                        f" {max(n0.index[0],n1.index[0])}]"
                     ],
                 )
             elif schema == IQM_SCHEMA:
