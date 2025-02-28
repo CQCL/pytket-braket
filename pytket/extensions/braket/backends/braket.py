@@ -730,7 +730,7 @@ class BraketBackend(Backend):
                 bkcirc,
                 self._s3_dest,
                 shots=n_shots,
-                disable_qubit_rewiring=self._supports_client_qubit_mapping,  # If device is RIGETTI, then True.
+                disable_qubit_rewiring=self._supports_client_qubit_mapping,
                 **kwargs,
             )
 
