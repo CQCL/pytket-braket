@@ -420,9 +420,13 @@ class BraketBackend(Backend):
 
         n_qubits = len(self._all_qubits)
 
+        # self._supports_client_qubit_mapping = (
+        #    self._device_type == _DeviceType.QPU
+        # ) and device_info["disabledQubitRewiringSupported"]
+
         self._supports_client_qubit_mapping = (
-            self._device_type == _DeviceType.QPU
-        ) and device_info["disabledQubitRewiringSupported"]
+            props["provider"]["braketSchemaHeader"] == RIGETTI_SCHEMA
+        )
 
         self._requires_all_qubits_measured = False
         try:
@@ -579,8 +583,8 @@ class BraketBackend(Backend):
                 get_link_error = lambda n0, n1: cast(
                     float,
                     specs2q[
-                        f"[{min(n0.index[0],n1.index[0])},"
-                        f" {max(n0.index[0],n1.index[0])}]"
+                        f"[{min(n0.index[0],n1.index[0])}, "
+                        f"{max(n0.index[0],n1.index[0])}]"
                     ],
                 )
             elif schema == IQM_SCHEMA:
@@ -726,7 +730,7 @@ class BraketBackend(Backend):
                 bkcirc,
                 self._s3_dest,
                 shots=n_shots,
-                disable_qubit_rewiring=self._supports_client_qubit_mapping,
+                disable_qubit_rewiring=self._supports_client_qubit_mapping,  # If device is RIGETTI, then True.
                 **kwargs,
             )
 
