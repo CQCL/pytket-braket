@@ -425,8 +425,8 @@ class BraketBackend(Backend):
         # ) and device_info["disabledQubitRewiringSupported"]
 
         self._supports_client_qubit_mapping = (
-            props["provider"]["braketSchemaHeader"] == RIGETTI_SCHEMA
-        )
+            self._device_type == _DeviceType.QPU
+        ) and (props["provider"]["braketSchemaHeader"] == RIGETTI_SCHEMA)
 
         self._requires_all_qubits_measured = False
         try:
