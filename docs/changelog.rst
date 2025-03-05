@@ -3,6 +3,11 @@
 Changelog
 ~~~~~~~~~
 
+0.40.0 (unreleased)
+-------------------
+
+* Update pytket minimium version requirement to 2.0.1.
+
 0.39.0 (January 2025)
 ---------------------
 
