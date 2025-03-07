@@ -420,10 +420,6 @@ class BraketBackend(Backend):
 
         n_qubits = len(self._all_qubits)
 
-        # self._supports_client_qubit_mapping = (
-        #    self._device_type == _DeviceType.QPU
-        # ) and device_info["disabledQubitRewiringSupported"]
-
         self._supports_client_qubit_mapping = (
             self._device_type == _DeviceType.QPU
         ) and (props["provider"]["braketSchemaHeader"] == RIGETTI_SCHEMA)
@@ -527,7 +523,7 @@ class BraketBackend(Backend):
                         all_qubits_set.update(v)
                     all_qubits = list(all_qubits_set)
                 else:
-                    raise ValueError(f"Unsupported device property {schema}")
+                    raise ValueError(f"Unsupported device schema {schema}")
         else:
             all_qubits = list(range(n_qubits))
 
