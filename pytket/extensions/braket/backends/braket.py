@@ -569,7 +569,7 @@ class BraketBackend(Backend):
                     node1q = str(instruction["node_ids"])
                     specs1qro[node1q] = instruction["characteristics"][0]["value"]
                 specs2q = {}
-                for instruction in instructions[5]["sites"]:
+                for instruction in instructions[4]["sites"]:
                     node2q = str(instruction["node_ids"])
                     specs2q[node2q] = instruction["characteristics"][0]["error"]
                 get_node_error = lambda n: cast(float, specs1qrb[f"[{n.index[0]}]"])
