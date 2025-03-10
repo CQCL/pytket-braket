@@ -115,10 +115,10 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     c = b.get_compiled_circuit(c)
     n_shots = 100
     h0, h1 = b.process_circuits([c, c], n_shots)
-    res0 = b.get_result(h0)
+    res0 = b.get_result(h0, timeout=200)
     readouts = res0.get_shots()
     assert all(readouts[i][0] == readouts[i][1] for i in range(n_shots))
-    res1 = b.get_result(h1)
+    res1 = b.get_result(h1, timeout=200)
     counts = res1.get_counts()
     assert len(counts) <= 2
     assert sum(counts.values()) == n_shots
