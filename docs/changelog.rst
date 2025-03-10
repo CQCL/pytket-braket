@@ -3,10 +3,11 @@
 Changelog
 ~~~~~~~~~
 
-0.40.0 (unreleased)
+0.40.0 (March 2025)
 -------------------
 
 * Update pytket minimium version requirement to 2.0.1.
+* Update to new schema for Rigetti devices.
 
 0.39.0 (January 2025)
 ---------------------
