@@ -37,6 +37,7 @@ from braket.aws import AwsDevice, AwsSession  # type: ignore
 from braket.aws.aws_device import AwsDeviceType  # type: ignore
 from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
 import braket.circuits  # type: ignore
+from braket.circuits import Circuit as BK_Circuit  # type: ignore
 from braket.circuits.observable import Observable  # type: ignore
 from braket.circuits.qubit_set import QubitSet  # type: ignore
 from braket.circuits.result_type import ResultType  # type: ignore
@@ -70,6 +71,7 @@ from pytket.passes import (
     DecomposeBoxes,
     SimplifyInitial,
     NaivePlacementPass,
+    AutoRebase,
 )
 from pytket.circuit_library import TK1_to_RzRx
 from pytket.pauli import Pauli, QubitPauliString
@@ -157,6 +159,10 @@ _gate_types = {
     "yy": OpType.YYPhase,
     "z": OpType.Z,
     "zz": OpType.ZZPhase,
+    "gpi": OpType.GPI,
+    "gpi2": OpType.GPI2,
+    "ms": OpType.AAMS,
+    "prx": OpType.PhasedX,
 }
 
 _multiq_gate_types = {
@@ -181,6 +187,7 @@ _multiq_gate_types = {
     "xy",
     "yy",
     "zz",
+    "ms",
 }
 
 _observables = {
@@ -271,6 +278,7 @@ class BraketBackend(Backend):
         device_type: Optional[str] = None,
         provider: Optional[str] = None,
         aws_session: Optional[AwsSession] = None,
+        verbatim: bool = False,
     ):
         """
         Construct a new braket backend.
@@ -298,6 +306,9 @@ class BraketBackend(Backend):
             default: "amazon"
         :param aws_session: braket AwsSession object, to pass credentials in if not
             configured on local machine
+        :param verbatim: use the feature "verbatim-compilation".
+            execute a job of circuit composed of the primitive gate set of QPU
+            default: False
         """
         super().__init__()
         # load config
@@ -321,6 +332,8 @@ class BraketBackend(Backend):
 
         # set up AwsSession to use; if it's None, braket will create sessions as needed
         self._aws_session = aws_session
+
+        self._verbatim = verbatim
 
         if local:
             self._device = LocalSimulator(backend=local_device)
@@ -356,6 +369,11 @@ class BraketBackend(Backend):
                 self._device_type = _DeviceType.QPU
             else:
                 raise ValueError(f"Unsupported device type {aws_device_type}")
+
+        if self._verbatim == True:
+            if not aws_device_type == _DeviceType.QPU:
+                raise ValueError(f"The verbatim is not supported for {aws_device_type}")
+
         props = self._device.properties.dict()
         action = props["action"]
         device_info = action.get(DeviceActionType.JAQCD)
@@ -364,8 +382,10 @@ class BraketBackend(Backend):
         if device_info is None:
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
-
-        supported_ops = set(op.lower() for op in device_info["supportedOperations"])
+        if self._verbatim == False:
+            supported_ops = set(op.lower() for op in device_info["supportedOperations"])
+        else:
+            supported_ops = set(op.lower() for op in props["paradigm"]["nativeGateSet"])
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
@@ -403,7 +423,7 @@ class BraketBackend(Backend):
             self._supports_contextual_optimisation = False
 
         self._singleqs, self._multiqs = self._get_gate_set(
-            supported_ops, self._device_type
+            supported_ops, self._device_type, self._verbatim
         )
 
         arch, self._all_qubits = self._get_arch_info(props, self._device_type)
@@ -459,26 +479,37 @@ class BraketBackend(Backend):
 
     @staticmethod
     def _get_gate_set(
-        supported_ops: Set[str], device_type: _DeviceType
+        supported_ops: Set[str], device_type: _DeviceType, verbatim: bool
     ) -> Tuple[Set[OpType], Set[OpType]]:
         multiqs = set()
         singleqs = set()
-        if not {"cnot", "rx", "rz", "x"} <= supported_ops:
-            # This is so that we can define RebaseCustom without prior knowledge of the
-            # gate set, and use X as the bit-flip gate in contextual optimization. We
-            # could do better than this, by defining different options depending on the
-            # supported gates. But it seems all existing backends support these gates.
-            raise NotImplementedError("Device must support cnot, rx, rz and x gates.")
-        for t in supported_ops:
-            tkt = _gate_types[t]
-            if tkt is not None:
-                if t in _multiq_gate_types:
-                    if device_type == _DeviceType.QPU and t in ["ccnot", "cswap"]:
-                        # FullMappingPass can't handle 3-qubit gates, so ignore them.
-                        continue
-                    multiqs.add(tkt)
-                else:
-                    singleqs.add(tkt)
+        if verbatim == False:
+            if not {"cnot", "rx", "rz", "x"} <= supported_ops:
+                # This is so that we can define RebaseCustom without prior knowledge of the
+                # gate set, and use X as the bit-flip gate in contextual optimization. We
+                # could do better than this, by defining different options depending on the
+                # supported gates. But it seems all existing backends support these gates.
+                raise NotImplementedError(
+                    "Device must support cnot, rx, rz and x gates."
+                )
+            for t in supported_ops:
+                tkt = _gate_types[t]
+                if tkt is not None:
+                    if t in _multiq_gate_types:
+                        if device_type == _DeviceType.QPU and t in ["ccnot", "cswap"]:
+                            # FullMappingPass can't handle 3-qubit gates, so ignore them.
+                            continue
+                        multiqs.add(tkt)
+                    else:
+                        singleqs.add(tkt)
+        else:
+            for t in supported_ops:
+                tkt = _gate_types[t]
+                if tkt is not None:
+                    if t in _multiq_gate_types:
+                        multiqs.add(tkt)
+                    else:
+                        singleqs.add(tkt)
         return singleqs, multiqs
 
     @staticmethod
@@ -668,42 +699,46 @@ class BraketBackend(Backend):
     def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
         assert optimisation_level in range(3)
         passes = [DecomposeBoxes()]
-        if optimisation_level == 1:
-            passes.append(SynthesiseTket())
-        elif optimisation_level == 2:
-            passes.append(FullPeepholeOptimise())
-        passes.append(self.rebase_pass())
-        if (
-            (self._device_type == _DeviceType.QPU)
-            and (self.characterisation is not None)
-            and (not self._requires_all_qubits_measured)
-        ):
-            arch = self.backend_info.architecture
-            assert isinstance(arch, Architecture)
-            passes.append(
-                CXMappingPass(
-                    arch,
-                    NoiseAwarePlacement(
-                        arch, **get_avg_characterisation(self.characterisation)  # type: ignore
-                    ),
-                    directed_cx=False,
-                    delay_measures=True,
+        if self._verbatim == False:
+            if optimisation_level == 1:
+                passes.append(SynthesiseTket())
+            elif optimisation_level == 2:
+                passes.append(FullPeepholeOptimise())
+            passes.append(self.rebase_pass())
+            if (
+                (self._device_type == _DeviceType.QPU)
+                and (self.characterisation is not None)
+                and (not self._requires_all_qubits_measured)
+            ):
+                arch = self.backend_info.architecture
+                assert isinstance(arch, Architecture)
+                passes.append(
+                    CXMappingPass(
+                        arch,
+                        NoiseAwarePlacement(
+                            arch, **get_avg_characterisation(self.characterisation)  # type: ignore
+                        ),
+                        directed_cx=False,
+                        delay_measures=True,
+                    )
                 )
-            )
-            passes.append(NaivePlacementPass(arch))
-            # If CX weren't supported by the device then we'd need to do another
-            # rebase_pass here. But we checked above that it is.
-        if optimisation_level == 1:
-            passes.extend([RemoveRedundancies(), self._squash_pass])
-        if optimisation_level == 2:
-            passes.extend(
-                [
-                    CliffordSimp(False),
-                    SynthesiseTket(),
-                    self.rebase_pass(),
-                    self._squash_pass,
-                ]
-            )
+                passes.append(NaivePlacementPass(arch))
+                # If CX weren't supported by the device then we'd need to do another
+                # rebase_pass here. But we checked above that it is.
+            if optimisation_level == 1:
+                passes.extend([RemoveRedundancies(), self._squash_pass])
+            if optimisation_level == 2:
+                passes.extend(
+                    [
+                        CliffordSimp(False),
+                        SynthesiseTket(),
+                        self.rebase_pass(),
+                        self._squash_pass,
+                    ]
+                )
+        if self._verbatim == True:
+            passes.append(AutoRebase(self.backend_info.gate_set))
+            passes.append(RemoveRedundancies())
         return SequencePass(passes)
 
     @property
@@ -722,13 +757,23 @@ class BraketBackend(Backend):
         if self._device_type == _DeviceType.LOCAL:
             return self._device.run(bkcirc, shots=n_shots, **kwargs)
         else:
-            return self._device.run(
-                bkcirc,
-                self._s3_dest,
-                shots=n_shots,
-                disable_qubit_rewiring=self._supports_client_qubit_mapping,
-                **kwargs,
-            )
+            if self._verbatim == False:
+                return self._device.run(
+                    bkcirc,
+                    self._s3_dest,
+                    shots=n_shots,
+                    disable_qubit_rewiring=self._supports_client_qubit_mapping,
+                    **kwargs,
+                )
+            else:
+                bkcirc_verbatim = BK_Circuit().add_verbatim_box(bkcirc)
+                return self._device.run(
+                    bkcirc_verbatim,
+                    self._s3_dest,
+                    shots=n_shots,
+                    disable_qubit_rewiring=True,
+                    **kwargs,
+                )
 
     def _to_bkcirc(
         self, circuit: Circuit
@@ -916,6 +961,7 @@ class BraketBackend(Backend):
         """
         region: Optional[str] = kwargs.get("region")
         aws_session: Optional[AwsSession] = kwargs.get("aws_session")
+        verbatim: Optional[bool] = kwargs.get("verbatim")
         if aws_session is None:
             if region is not None:
                 session = AwsSession(boto_session=boto3.Session(region_name=region))
@@ -946,7 +992,9 @@ class BraketBackend(Backend):
                 supported_ops = set(
                     op.lower() for op in device_info["supportedOperations"]
                 )
-                singleqs, multiqs = cls._get_gate_set(supported_ops, device_type)
+                singleqs, multiqs = cls._get_gate_set(
+                    supported_ops, device_type, verbatim
+                )
             except KeyError:
                 # The device has unsupported ops or it's a quantum annealer
                 continue
