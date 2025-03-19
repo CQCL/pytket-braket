@@ -135,6 +135,14 @@ def tk_to_braket(
             bkcirc.z(*qbs)
         elif optype == OpType.ZZPhase:
             bkcirc.zz(*qbs, params[0] * pi)
+        elif optype == OpType.GPI:
+            bkcirc.gpi(*qbs, params[0] * pi)
+        elif optype == OpType.GPI2:
+            bkcirc.gpi2(*qbs, params[0] * pi)
+        elif optype == OpType.AAMS:
+            bkcirc.ms(*qbs, params[2] * pi, params[0] * pi, params[1] * pi)
+        elif optype == OpType.PhasedX:
+            bkcirc.prx(*qbs, params[0] * pi, params[1] * pi)
         elif optype == OpType.Measure:
             # Not wanted by braket, but must be tracked for final conversion of results.
             measures[qbs[0]] = cbs[0]
