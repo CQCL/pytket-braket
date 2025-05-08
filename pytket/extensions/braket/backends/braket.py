@@ -456,7 +456,7 @@ class BraketBackend(Backend):
         multiqs = set()
         singleqs = set()
         if not {"cnot", "rx", "rz", "x"} <= supported_ops:
-            # This is so that we can define RebaseCustom without prior knowledge of the
+            # This is so that we can define AutoRebase without prior knowledge of the
             # gate set, and use X as the bit-flip gate in contextual optimization. We
             # could do better than this, by defining different options depending on the
             # supported gates. But it seems all existing backends support these gates.
