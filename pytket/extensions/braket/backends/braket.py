@@ -71,7 +71,6 @@ from pytket.passes import (
     AutoRebase,
     AutoSquash,
 )
-from pytket.circuit_library import TK1_to_RzRx
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import (
     ConnectivityPredicate,
