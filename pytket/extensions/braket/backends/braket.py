@@ -65,7 +65,6 @@ from pytket.passes import (
     SynthesiseTket,
     FullPeepholeOptimise,
     CliffordSimp,
-    SquashCustom,
     DecomposeBoxes,
     SimplifyInitial,
     NaivePlacementPass,
