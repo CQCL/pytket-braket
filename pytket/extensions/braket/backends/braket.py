@@ -60,7 +60,6 @@ from pytket.circuit import Circuit, OpType
 from pytket.passes import (
     BasePass,
     CXMappingPass,
-    RebaseCustom,
     RemoveRedundancies,
     SequencePass,
     SynthesiseTket,
@@ -70,6 +69,8 @@ from pytket.passes import (
     DecomposeBoxes,
     SimplifyInitial,
     NaivePlacementPass,
+    AutoRebase,
+    AutoSquash,
 )
 from pytket.circuit_library import TK1_to_RzRx
 from pytket.pauli import Pauli, QubitPauliString
@@ -447,15 +448,8 @@ class BraketBackend(Backend):
         ):
             self._req_preds.append(ConnectivityPredicate(arch))
 
-        self._rebase_pass = RebaseCustom(
-            self._multiqs | self._singleqs,
-            Circuit(),
-            TK1_to_RzRx,
-        )
-        self._squash_pass = SquashCustom(
-            self._singleqs,
-            TK1_to_RzRx,
-        )
+        self._rebase_pass = AutoRebase(self._multiqs | self._singleqs)
+        self._squash_pass = AutoSquash(self._singleqs)
 
     @staticmethod
     def _get_gate_set(
