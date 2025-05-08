@@ -23,6 +23,7 @@ from pytket.extensions.braket import BraketBackend
 from pytket.architecture import FullyConnected
 from pytket.circuit import Circuit, OpType, Qubit, Bit
 from pytket.pauli import Pauli, QubitPauliString
+from pytket.passes import SequencePass, BasePass
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
@@ -633,3 +634,14 @@ def test_multiple_indices_rigetti(authenticated_braket_backend: BraketBackend) -
     c1 = b.get_compiled_circuit(c)
     h = b.process_circuit(c1, 100)
     b.cancel(h)
+
+
+def test_default_pass_serialization(
+    authenticated_braket_backend: BraketBackend,
+) -> None:
+    for opt_level in range(3):
+        default_pass = authenticated_braket_backend.default_compilation_pass(opt_level)
+        original_pass_dict = default_pass.to_dict()
+        reconstructed_pass = BasePass.from_dict(original_pass_dict)
+        assert isinstance(reconstructed_pass, SequencePass)
+        assert original_pass_dict == reconstructed_pass.to_dict()
