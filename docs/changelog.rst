@@ -7,7 +7,7 @@ Unreleased
 ----------
 
 * Python 3.13 support added.
-* Replaced internal usage of :py:class:`~pytket.passes.RebaseCustom` and :py:class:`~pytket.passes.SquashCustom` so that the :py:meth:`BraketBackend.default_compilation_pass` is serializable.
+* Replaced internal usage of :py:class:`~pytket.passes.RebaseCustom` and :py:class:`~pytket.passes.SquashCustom` so that the :py:meth:`BraketBackend.default_compilation_pass` method is serializable.
 
 0.40.0 (March 2025)
 -------------------
