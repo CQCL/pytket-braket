@@ -636,12 +636,48 @@ def test_multiple_indices_rigetti(authenticated_braket_backend: BraketBackend) -
     b.cancel(h)
 
 
-def test_default_pass_serialization(
-    authenticated_braket_backend: BraketBackend,
-) -> None:
+# Helper function used for testing serialization
+# Both local and remote backends are tested.
+def run_serialization_test(backend: BraketBackend) -> None:
     for opt_level in range(3):
-        default_pass = authenticated_braket_backend.default_compilation_pass(opt_level)
+        default_pass = backend.default_compilation_pass(opt_level)
         original_pass_dict = default_pass.to_dict()
         reconstructed_pass = BasePass.from_dict(original_pass_dict)
         assert isinstance(reconstructed_pass, SequencePass)
         assert original_pass_dict == reconstructed_pass.to_dict()
+
+
+def test_local_backend_pass_serialization() -> None:
+    local_backend = BraketBackend(local=True)
+    run_serialization_test(local_backend)
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize(
+    "authenticated_braket_backend",
+    [
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-1",
+        },
+        {
+            "device_type": "qpu",
+            "provider": "rigetti",
+            "device": "Ankaa-3",
+            "region": "us-west-1",
+        },
+        {
+            "device_type": "qpu",
+            "provider": "iqm",
+            "device": "Garnet",
+            "region": "eu-north-1",
+        },
+    ],
+    indirect=True,
+)
+def test_remote_backend_pass_serialization(
+    authenticated_braket_backend: BraketBackend,
+) -> None:
+    run_serialization_test(authenticated_braket_backend)
