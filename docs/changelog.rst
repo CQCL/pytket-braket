@@ -3,12 +3,13 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.41.0 (May 2025)
+-----------------
 
 * Python 3.13 support added.
 * Replaced internal usage of :py:class:`~pytket.passes.RebaseCustom` and :py:class:`~pytket.passes.SquashCustom` so that the :py:meth:`BraketBackend.default_compilation_pass` method uses only serializable passes.
 * Changed default optimization level from 1 to 2.
+* Update pytket minimum version requirement to 2.4.1.
 
 0.40.0 (March 2025)
 -------------------
