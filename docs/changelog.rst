@@ -7,11 +7,12 @@ Unreleased
 ----------
 
 * Python 3.13 support added.
+* Replaced internal usage of :py:class:`~pytket.passes.RebaseCustom` and :py:class:`~pytket.passes.SquashCustom` so that the :py:meth:`BraketBackend.default_compilation_pass` method uses only serializable passes.
 
 0.40.0 (March 2025)
 -------------------
 
-* Update pytket minimium version requirement to 2.0.1.
+* Update pytket minimum version requirement to 2.0.1.
 * Update to new schema for Rigetti devices.
 
 0.39.0 (January 2025)

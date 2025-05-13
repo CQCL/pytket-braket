@@ -60,18 +60,17 @@ from pytket.circuit import Circuit, OpType
 from pytket.passes import (
     BasePass,
     CXMappingPass,
-    RebaseCustom,
     RemoveRedundancies,
     SequencePass,
     SynthesiseTket,
     FullPeepholeOptimise,
     CliffordSimp,
-    SquashCustom,
     DecomposeBoxes,
     SimplifyInitial,
     NaivePlacementPass,
+    AutoRebase,
+    AutoSquash,
 )
-from pytket.circuit_library import TK1_to_RzRx
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.predicates import (
     ConnectivityPredicate,
@@ -447,15 +446,8 @@ class BraketBackend(Backend):
         ):
             self._req_preds.append(ConnectivityPredicate(arch))
 
-        self._rebase_pass = RebaseCustom(
-            self._multiqs | self._singleqs,
-            Circuit(),
-            TK1_to_RzRx,
-        )
-        self._squash_pass = SquashCustom(
-            self._singleqs,
-            TK1_to_RzRx,
-        )
+        self._rebase_pass = AutoRebase(self._multiqs | self._singleqs)
+        self._squash_pass = AutoSquash(self._singleqs)
 
     @staticmethod
     def _get_gate_set(
@@ -464,7 +456,7 @@ class BraketBackend(Backend):
         multiqs = set()
         singleqs = set()
         if not {"cnot", "rx", "rz", "x"} <= supported_ops:
-            # This is so that we can define RebaseCustom without prior knowledge of the
+            # This is so that we can define AutoRebase without prior knowledge of the
             # gate set, and use X as the bit-flip gate in contextual optimization. We
             # could do better than this, by defining different options depending on the
             # supported gates. But it seems all existing backends support these gates.
