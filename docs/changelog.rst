@@ -7,6 +7,7 @@ Unreleased
 ----------
 
 * Python 3.13 support added.
+* Changed default optimization level from 1 to 2.
 
 0.40.0 (March 2025)
 -------------------
