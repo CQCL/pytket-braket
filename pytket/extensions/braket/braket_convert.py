@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Cambridge Quantum Computing
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Conversion from tket to braket
-"""
+"""Conversion from tket to braket"""
 
 from typing import (
     cast,
@@ -28,10 +27,10 @@ from typing import (
 )
 from numpy import pi
 from braket.circuits import Circuit as BK_Circuit  # type: ignore
-from pytket.circuit import Circuit, OpType, Qubit  # type: ignore
+from pytket.circuit import Circuit, OpType, Qubit
 
 if TYPE_CHECKING:
-    from pytket.circuit import Node  # type: ignore
+    from pytket.circuit import Node
 
 
 def tk_to_braket(
@@ -231,7 +230,7 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:
 
 
 def get_avg_characterisation(
-    characterisation: Dict[str, Any]
+    characterisation: Dict[str, Any],
 ) -> Dict[str, Dict["Node", float]]:
     """
     Convert gate-specific characterisation into readout, one- and two-qubit errors

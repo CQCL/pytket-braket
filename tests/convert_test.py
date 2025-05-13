@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Cambridge Quantum Computing
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 import pytest
 from pytket.extensions.braket import braket_to_tk, tk_to_braket
-from pytket.circuit import Circuit, OpType  # type: ignore
+from pytket.circuit import Circuit, OpType
 
 
 def test_convert() -> None:

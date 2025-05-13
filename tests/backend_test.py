@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Cambridge Quantum Computing
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ from hypothesis import given, settings, strategies
 import numpy as np
 import pytest
 from pytket.extensions.braket import BraketBackend
-from pytket.circuit import Circuit, OpType, Qubit, Bit  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
+from pytket.architecture import FullyConnected
+from pytket.circuit import Circuit, OpType, Qubit, Bit
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.passes import SequencePass, BasePass
 from pytket.utils.expectations import (
     get_pauli_expectation_value,
     get_operator_expectation_value,
@@ -114,10 +116,10 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     c = b.get_compiled_circuit(c)
     n_shots = 100
     h0, h1 = b.process_circuits([c, c], n_shots)
-    res0 = b.get_result(h0)
+    res0 = b.get_result(h0, timeout=200)
     readouts = res0.get_shots()
     assert all(readouts[i][0] == readouts[i][1] for i in range(n_shots))
-    res1 = b.get_result(h1)
+    res1 = b.get_result(h1, timeout=200)
     counts = res1.get_counts()
     assert len(counts) <= 2
     assert sum(counts.values()) == n_shots
@@ -126,7 +128,7 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     c.measure_all()
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 1)
-    res = b.get_result(h)
+    res = b.get_result(h, timeout=200)
     readout = res.get_shots()[0]
     assert readout[1] == readout[2]
 
@@ -134,7 +136,26 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
-    [{"device_type": "qpu", "provider": "ionq", "device": "ionQdevice"}],
+    [
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-1",
+        },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-2",
+        },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Forte-1",
+        },
+    ],
     indirect=True,
 )
 def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
@@ -146,8 +167,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
 
     # Device is fully connected
     arch = b.backend_info.architecture
-    n = len(arch.nodes)
-    assert len(arch.coupling) == n * (n - 1)
+    assert isinstance(arch, FullyConnected)
 
     chars = b.characterisation
     assert chars is not None
@@ -191,7 +211,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-2",
+            "device": "Ankaa-3",
             "region": "us-west-1",
         }
     ],
@@ -236,7 +256,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-2",
+            "device": "Ankaa-3",
             "region": "us-west-1",
         }
     ],
@@ -258,14 +278,14 @@ def test_rigetti_with_rerouting(authenticated_braket_backend: BraketBackend) -> 
     [
         {
             "device_type": "qpu",
-            "provider": "oqc",
-            "device": "Lucy",
-            "region": "eu-west-2",
+            "provider": "iqm",
+            "device": "Garnet",
+            "region": "eu-north-1",
         }
     ],
     indirect=True,
 )
-def test_oqc(authenticated_braket_backend: BraketBackend) -> None:
+def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
     skip_if_device_is_not_available(b)
     assert b.persistent_handles
@@ -291,7 +311,7 @@ def test_oqc(authenticated_braket_backend: BraketBackend) -> None:
     b.cancel(h)
 
     # Circuit with unused qubits
-    c = Circuit(7).H(5).CX(5, 6)
+    c = Circuit(20).H(5).CX(5, 6)
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 10)
     b.cancel(h)
@@ -461,7 +481,7 @@ def test_state() -> None:
     h = b.process_circuit(c)
     res = b.get_result(h)
     v = res.get_state()
-    assert np.vdot(v, v) == pytest.approx(1)  # type: ignore
+    assert np.vdot(v, v) == pytest.approx(1)
 
 
 def test_default_pass() -> None:
@@ -479,7 +499,7 @@ def test_default_pass() -> None:
 
 
 @given(
-    n_shots=strategies.integers(min_value=1, max_value=10),  # type: ignore
+    n_shots=strategies.integers(min_value=1, max_value=10),
     n_bits=strategies.integers(min_value=0, max_value=10),
 )
 @settings(deadline=None)
@@ -510,7 +530,14 @@ def test_shots_bits_edgecases(n_shots: int, n_bits: int) -> None:
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
     "authenticated_braket_backend",
-    [{"device_type": "qpu", "provider": "ionq", "device": "ionQdevice"}],
+    [
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-1",
+        }
+    ],
     indirect=True,
 )
 def test_postprocess_ionq(authenticated_braket_backend: BraketBackend) -> None:
@@ -586,7 +613,7 @@ def test_multiple_indices() -> None:
         {
             "device_type": "qpu",
             "provider": "rigetti",
-            "device": "Aspen-M-2",
+            "device": "Ankaa-3",
             "region": "us-west-1",
         }
     ],
@@ -607,3 +634,50 @@ def test_multiple_indices_rigetti(authenticated_braket_backend: BraketBackend) -
     c1 = b.get_compiled_circuit(c)
     h = b.process_circuit(c1, 100)
     b.cancel(h)
+
+
+# Helper function used for testing serialization
+# Both local and remote backends are tested.
+def run_serialization_test(backend: BraketBackend) -> None:
+    for opt_level in range(3):
+        default_pass = backend.default_compilation_pass(opt_level)
+        original_pass_dict = default_pass.to_dict()
+        reconstructed_pass = BasePass.from_dict(original_pass_dict)
+        assert isinstance(reconstructed_pass, SequencePass)
+        assert original_pass_dict == reconstructed_pass.to_dict()
+
+
+def test_local_backend_pass_serialization() -> None:
+    local_backend = BraketBackend(local=True)
+    run_serialization_test(local_backend)
+
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize(
+    "authenticated_braket_backend",
+    [
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-1",
+        },
+        {
+            "device_type": "qpu",
+            "provider": "rigetti",
+            "device": "Ankaa-3",
+            "region": "us-west-1",
+        },
+        {
+            "device_type": "qpu",
+            "provider": "iqm",
+            "device": "Garnet",
+            "region": "eu-north-1",
+        },
+    ],
+    indirect=True,
+)
+def test_remote_backend_pass_serialization(
+    authenticated_braket_backend: BraketBackend,
+) -> None:
+    run_serialization_test(authenticated_braket_backend)

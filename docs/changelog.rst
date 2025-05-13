@@ -1,5 +1,104 @@
+.. currentmodule:: pytket.extensions.braket
+
 Changelog
 ~~~~~~~~~
+
+Unreleased
+----------
+
+* Python 3.13 support added.
+* Replaced internal usage of :py:class:`~pytket.passes.RebaseCustom` and :py:class:`~pytket.passes.SquashCustom` so that the :py:meth:`BraketBackend.default_compilation_pass` method uses only serializable passes.
+* Changed default optimization level from 1 to 2.
+
+0.40.0 (March 2025)
+-------------------
+
+* Update pytket minimum version requirement to 2.0.1.
+* Update to new schema for Rigetti devices.
+
+0.39.0 (January 2025)
+---------------------
+
+* Updated pytket version requirement to 1.39.
+* Remove code related to OQC devices (no longer supported on AWS Braket).
+
+0.38.0 (October 2024)
+---------------------
+
+* Updated pytket version requirement to 1.33.
+
+0.37.0 (July 2024)
+------------------
+
+* Updated pytket version requirement to 1.30.
+
+0.36.0 (April 2024)
+-------------------
+
+* Updated pytket version requirement to 1.27.
+* Devices with full connectivity will use the `FullyConnected` class
+  to represent their architecture.
+
+0.35.1 (March 2024)
+-------------------
+
+* Updated pytket version requirement to 1.26.
+
+0.34.1 (January 2024)
+---------------------
+
+* Updated pytket version requirement to 1.24.
+* Python 3.12 support added, 3.9 dropped.
+
+0.33.0 (January 2024)
+---------------------
+
+* Updated pytket version requirement to 1.23.
+
+0.32.0 (November 2023)
+----------------------
+
+* Updated pytket version requirement to 1.22.
+
+0.31.2 (November 2023)
+----------------------
+
+* Replace uses of "private" (underscored) pytket symbols.
+
+0.31.1 (October 2023)
+---------------------
+
+* Fix use of ``SimplifyInitial``
+
+0.31.0 (October 2023)
+---------------------
+
+* Don't include ``SimplifyInitial`` in default passes; instead make it an option
+  to ``process_circuits()``.
+* Updated pytket version requirement to 1.21.
+
+0.30.0 (September 2023)
+-----------------------
+
+* Update pytket version requirement to 1.19.
+* Update amazon-braket-sdk version requirement to 1.53.
+* Update amazon-braket-schemas version requirement to 1.19.
+* Update amazon-braket-default-simulator version requirement to 1.20.
+
+0.29.0 (July 2023)
+------------------
+
+* Update pytket version requirement to 1.17.
+
+0.28.0 (June 2023)
+------------------
+
+* Updated pytket version requirement to 1.16.
+
+0.27.0 (May 2023)
+-----------------
+
+* Updated pytket version requirement to 1.15.
 
 0.26.0 (January 2023)
 ---------------------

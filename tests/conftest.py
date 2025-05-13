@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Cambridge Quantum Computing
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ def get_authenticated_aws_session(region: Optional[str] = None) -> Optional[AwsS
         # Note: this session fixture should be used when creating backends for tests
         #       where PYTKET_RUN_REMOTE_TESTS is true
         region_name = region or os.getenv("PYTKET_REMOTE_BRAKET_REGION")
-        boto_session = boto3.Session(  # type: ignore
+        boto_session = boto3.Session(
             aws_access_key_id=os.getenv("PYTKET_REMOTE_BRAKET_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("PYTKET_REMOTE_BRAKET_ACCESS_KEY_SECRET"),
             region_name=region_name,

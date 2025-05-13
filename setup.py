@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Cambridge Quantum Computing
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ setup(
     name="pytket-braket",
     version=metadata["__extension_version__"],
     author="TKET development team",
-    author_email="tket-support@cambridgequantum.com",
-    python_requires=">=3.9",
+    author_email="tket-support@quantinuum.com",
+    python_requires=">=3.10",
     project_urls={
-        "Documentation": "https://cqcl.github.io/pytket-braket/api/index.html",
+        "Documentation": "https://tket.quantinuum.com/extensions/pytket-braket/index.html",
         "Source": "https://github.com/CQCL/pytket-braket",
         "Tracker": "https://github.com/CQCL/pytket-braket/issues",
     },
@@ -43,17 +43,18 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket ~= 1.11",
-        "amazon-braket-sdk ~= 1.31",
-        "amazon-braket-schemas ~= 1.10",
-        "amazon-braket-default-simulator ~= 1.9",
+        "pytket >= 2.0.1",
+        "amazon-braket-sdk ~= 1.53",
+        "amazon-braket-schemas ~= 1.23",
+        "amazon-braket-default-simulator ~= 1.20",
         "boto3-stubs",
     ],
     classifiers=[
         "Environment :: Console",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX :: Linux",

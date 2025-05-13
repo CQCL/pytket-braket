@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Cambridge Quantum Computing
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from itertools import permutations
 import json
 import warnings
 from enum import Enum
@@ -42,7 +43,7 @@ from braket.circuits.result_type import ResultType  # type: ignore
 from braket.device_schema import DeviceActionType  # type: ignore
 from braket.devices import LocalSimulator  # type: ignore
 from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
-import boto3  # type: ignore
+import boto3
 import numpy as np
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
@@ -55,24 +56,23 @@ from pytket.extensions.braket.braket_convert import (
     get_avg_characterisation,
 )
 from pytket.extensions.braket._metadata import __extension_version__
-from pytket.circuit import Circuit, OpType  # type: ignore
-from pytket.passes import (  # type: ignore
+from pytket.circuit import Circuit, OpType
+from pytket.passes import (
     BasePass,
     CXMappingPass,
-    RebaseCustom,
     RemoveRedundancies,
     SequencePass,
     SynthesiseTket,
     FullPeepholeOptimise,
     CliffordSimp,
-    SquashCustom,
     DecomposeBoxes,
     SimplifyInitial,
     NaivePlacementPass,
+    AutoRebase,
+    AutoSquash,
 )
-from pytket._tket.circuit._library import _TK1_to_RzRx  # type: ignore
-from pytket.pauli import Pauli, QubitPauliString  # type: ignore
-from pytket.predicates import (  # type: ignore
+from pytket.pauli import Pauli, QubitPauliString
+from pytket.predicates import (
     ConnectivityPredicate,
     GateSetPredicate,
     MaxNQubitsPredicate,
@@ -82,8 +82,8 @@ from pytket.predicates import (  # type: ignore
     NoSymbolsPredicate,
     Predicate,
 )
-from pytket.architecture import Architecture  # type: ignore
-from pytket.placement import NoiseAwarePlacement  # type: ignore
+from pytket.architecture import Architecture, FullyConnected
+from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.outcomearray import OutcomeArray
@@ -91,7 +91,7 @@ from pytket.utils.outcomearray import OutcomeArray
 from .config import BraketConfig
 
 if TYPE_CHECKING:
-    from pytket.circuit import Node  # type: ignore
+    from pytket.circuit import Node
 
 # Known schemas for noise characteristics
 IONQ_SCHEMA = {
@@ -100,10 +100,10 @@ IONQ_SCHEMA = {
 }
 RIGETTI_SCHEMA = {
     "name": "braket.device_schema.rigetti.rigetti_provider_properties",
-    "version": "1",
+    "version": "2",
 }
-OQC_SCHEMA = {
-    "name": "braket.device_schema.oqc.oqc_provider_properties",
+IQM_SCHEMA = {
+    "name": "braket.device_schema.iqm.iqm_provider_properties",
     "version": "1",
 }
 
@@ -133,6 +133,7 @@ _gate_types = {
     "phase_damping": None,
     "phase_flip": None,
     "phaseshift": OpType.U1,
+    "prx": None,
     "rx": OpType.Rx,
     "ry": OpType.Ry,
     "rz": OpType.Rz,
@@ -292,8 +293,7 @@ class BraketBackend(Backend):
         :param s3_folder: name of folder ("key") in S3 bucket to store results in
         :param device_type: device type from device ARN (e.g. "qpu"),
             default: "quantum-simulator"
-        :param provider: provider name from device ARN (e.g. "ionq", "rigetti", "oqc",
-            ...),
+        :param provider: provider name from device ARN (e.g. "ionq", "rigetti", ...),
             default: "amazon"
         :param aws_session: braket AwsSession object, to pass credentials in if not
             configured on local machine
@@ -356,9 +356,11 @@ class BraketBackend(Backend):
             else:
                 raise ValueError(f"Unsupported device type {aws_device_type}")
         props = self._device.properties.dict()
-        try:
-            device_info = props["action"][DeviceActionType.JAQCD]
-        except KeyError:
+        action = props["action"]
+        device_info = action.get(DeviceActionType.JAQCD)
+        if device_info is None:
+            device_info = action.get(DeviceActionType.OPENQASM)
+        if device_info is None:
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
 
@@ -415,12 +417,11 @@ class BraketBackend(Backend):
             self._characteristics,
         )
 
-        paradigm = props["paradigm"]
         n_qubits = len(self._all_qubits)
 
         self._supports_client_qubit_mapping = (
             self._device_type == _DeviceType.QPU
-        ) and device_info["disabledQubitRewiringSupported"]
+        ) and (props["provider"]["braketSchemaHeader"] == RIGETTI_SCHEMA)
 
         self._requires_all_qubits_measured = False
         try:
@@ -440,21 +441,13 @@ class BraketBackend(Backend):
             MaxNQubitsPredicate(n_qubits),
         ]
 
-        if (
-            self._device_type == _DeviceType.QPU
-            and not paradigm["connectivity"]["fullyConnected"]
+        if self._device_type == _DeviceType.QPU and not isinstance(
+            arch, FullyConnected
         ):
             self._req_preds.append(ConnectivityPredicate(arch))
 
-        self._rebase_pass = RebaseCustom(
-            self._multiqs | self._singleqs,
-            Circuit(),
-            _TK1_to_RzRx,
-        )
-        self._squash_pass = SquashCustom(
-            self._singleqs,
-            _TK1_to_RzRx,
-        )
+        self._rebase_pass = AutoRebase(self._multiqs | self._singleqs)
+        self._squash_pass = AutoSquash(self._singleqs)
 
     @staticmethod
     def _get_gate_set(
@@ -463,7 +456,7 @@ class BraketBackend(Backend):
         multiqs = set()
         singleqs = set()
         if not {"cnot", "rx", "rz", "x"} <= supported_ops:
-            # This is so that we can define RebaseCustom without prior knowledge of the
+            # This is so that we can define AutoRebase without prior knowledge of the
             # gate set, and use X as the bit-flip gate in contextual optimization. We
             # could do better than this, by defining different options depending on the
             # supported gates. But it seems all existing backends support these gates.
@@ -483,7 +476,7 @@ class BraketBackend(Backend):
     @staticmethod
     def _get_arch_info(
         device_properties: Dict[str, Any], device_type: _DeviceType
-    ) -> Tuple[Architecture, List[int]]:
+    ) -> Tuple[Architecture | FullyConnected, List[int]]:
         # return the architecture, and all_qubits
         paradigm = device_properties["paradigm"]
         n_qubits = paradigm["qubitCount"]
@@ -493,32 +486,52 @@ class BraketBackend(Backend):
             if connectivity["fullyConnected"]:
                 all_qubits: List = list(range(n_qubits))
             else:
+                schema = device_properties["provider"]["braketSchemaHeader"]
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
-                connectivity_graph = dict(
-                    (int(k), [int(v) for v in l]) for k, l in connectivity_graph.items()
-                )
-                # each connectivity graph key will be an int
-                # connectivity_graph values will be lists
-                all_qubits_set = set()
-                for k, v in connectivity_graph.items():
-                    all_qubits_set.add(k)
-                    all_qubits_set.update(v)
-                all_qubits = list(all_qubits_set)
+                if schema == IQM_SCHEMA:
+                    connectivity_graph = dict(
+                        (int(k) - 1, [int(v) - 1 for v in l])
+                        for k, l in connectivity_graph.items()
+                    )
+                    # each connectivity graph key will be an int
+                    # connectivity_graph values will be lists
+                    all_qubits_set = set()
+                    for k, v in connectivity_graph.items():
+                        all_qubits_set.add(k - 1)
+                        for l in v:
+                            all_qubits_set.add(l - 1)
+                    all_qubits = list(all_qubits_set)
+                elif schema == RIGETTI_SCHEMA:
+                    connectivity_graph = dict(
+                        (int(k), [int(v) for v in l])
+                        for k, l in connectivity_graph.items()
+                    )
+                    # each connectivity graph key will be an int
+                    # connectivity_graph values will be lists
+                    all_qubits_set = set()
+                    for k, v in connectivity_graph.items():
+                        all_qubits_set.add(k)
+                        all_qubits_set.update(v)
+                    all_qubits = list(all_qubits_set)
+                else:
+                    raise ValueError(f"Unsupported device schema {schema}")
         else:
             all_qubits = list(range(n_qubits))
 
+        arch: Architecture | FullyConnected
         if connectivity_graph is None:
-            connectivity_graph = dict(
-                (k, [v for v in all_qubits if v != k]) for k in all_qubits
+            arch = FullyConnected(len(all_qubits))
+        else:
+            arch = Architecture(
+                [(k, v) for k, l in connectivity_graph.items() for v in l]
             )
-        arch = Architecture([(k, v) for k, l in connectivity_graph.items() for v in l])
         return arch, all_qubits
 
     @classmethod
     def _get_backend_info(
         cls,
-        arch: Architecture,
+        arch: Architecture | FullyConnected,
         device_name: str,
         singleqs: Set[OpType],
         multiqs: Set[OpType],
@@ -532,36 +545,62 @@ class BraketBackend(Backend):
                     float, fid["1Q"]["mean"]
                 )
                 get_readout_error: Callable[["Node"], float] = lambda n: 0.0
-                get_link_error: Callable[
-                    ["Node", "Node"], float
-                ] = lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
+                get_link_error: Callable[["Node", "Node"], float] = (
+                    lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
+                )
             elif schema == RIGETTI_SCHEMA:
                 specs = characteristics["specs"]
-                specs1q, specs2q = specs["1Q"], specs["2Q"]
-                get_node_error = lambda n: 1.0 - cast(
-                    float, specs1q[f"{n.index[0]}"].get("f1QRB", 1.0)
-                )
+                benchmarks = specs["benchmarks"]
+                instructions = specs["instructions"]
+                specs1qrb = {}
+                for benchmark in benchmarks[0]["sites"]:
+                    node1q = str(benchmark["node_ids"])
+                    specs1qrb[node1q] = benchmark["characteristics"][0]["error"]
+                specs1qro = {}
+                for instruction in instructions[3]["sites"]:
+                    node1q = str(instruction["node_ids"])
+                    specs1qro[node1q] = instruction["characteristics"][0]["value"]
+                specs2q = {}
+                for instruction in instructions[4]["sites"]:
+                    node2q = str(instruction["node_ids"])
+                    specs2q[node2q] = instruction["characteristics"][0]["error"]
+                get_node_error = lambda n: cast(float, specs1qrb[f"[{n.index[0]}]"])
                 get_readout_error = lambda n: 1.0 - cast(
-                    float, specs1q[f"{n.index[0]}"].get("fRO", 1.0)
+                    float, specs1qro[f"[{n.index[0]}]"]
                 )
-                get_link_error = lambda n0, n1: 1.0 - cast(
+                get_link_error = lambda n0, n1: cast(
                     float,
                     specs2q[
-                        f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
-                    ].get("fCZ", 1.0),
+                        f"[{min(n0.index[0],n1.index[0])}, "
+                        f"{max(n0.index[0],n1.index[0])}]"
+                    ],
                 )
-            elif schema == OQC_SCHEMA:
+            elif schema == IQM_SCHEMA:
                 properties = characteristics["properties"]
-                props1q, props2q = properties["one_qubit"], properties["two_qubit"]
+                props1q = {}
+                for key in properties["one_qubit"].keys():
+                    node1q = str(int(key) - 1)
+                    props1q[node1q] = properties["one_qubit"][key]
+                props2q = {}
+                for key in properties["two_qubit"].keys():
+                    ind = key.index("-")
+                    node2q1, node2q2 = str(int(key[:ind]) - 1), str(
+                        int(key[ind + 1 :]) - 1
+                    )
+                    props2q[node2q1 + "-" + node2q2] = properties["two_qubit"][key]
                 get_node_error = lambda n: 1.0 - cast(
-                    float, props1q[f"{n.index[0]}"]["fRB"]
+                    float, props1q[f"{n.index[0]}"]["f1Q_simultaneous_RB"]
                 )
                 get_readout_error = lambda n: 1.0 - cast(
                     float, props1q[f"{n.index[0]}"]["fRO"]
                 )
                 get_link_error = lambda n0, n1: 1.0 - cast(
-                    float, props2q[f"{n0.index[0]}-{n1.index[0]}"]["fCX"]
+                    float,
+                    props2q[
+                        f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
+                    ]["fCZ"],
                 )
+
             # readout error as symmetric 2x2 matrix
             to_sym_mat: Callable[[float], List[List[float]]] = lambda x: [
                 [1.0 - x, x],
@@ -574,9 +613,21 @@ class BraketBackend(Backend):
             readout_errors = {
                 node: to_sym_mat(get_readout_error(node)) for node in arch.nodes
             }
+
+            # Construct a fake coupling map if we have a FullyConnected architecture,
+            # otherwise use the coupling provided by the Architecture class.
+            coupling: list[tuple["Node", "Node"]]
+            if isinstance(arch, FullyConnected):
+                # cast is needed as mypy does not know that we passed a fixed
+                # integer to `permutations`.
+                coupling = cast(
+                    list[tuple["Node", "Node"]], list(permutations(arch.nodes, 2))
+                )
+            else:
+                coupling = arch.coupling
             link_errors = {
                 (n0, n1): {optype: get_link_error(n0, n1) for optype in multiqs}
-                for n0, n1 in arch.coupling
+                for n0, n1 in coupling
             }
 
             backend_info = BackendInfo(
@@ -606,7 +657,7 @@ class BraketBackend(Backend):
     def rebase_pass(self) -> BasePass:
         return self._rebase_pass
 
-    def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
+    def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
         passes = [DecomposeBoxes()]
         if optimisation_level == 1:
@@ -620,11 +671,12 @@ class BraketBackend(Backend):
             and (not self._requires_all_qubits_measured)
         ):
             arch = self.backend_info.architecture
+            assert isinstance(arch, Architecture)
             passes.append(
                 CXMappingPass(
                     arch,
                     NoiseAwarePlacement(
-                        arch, **get_avg_characterisation(self.characterisation)
+                        arch, **get_avg_characterisation(self.characterisation)  # type: ignore
                     ),
                     directed_cx=False,
                     delay_measures=True,
@@ -643,10 +695,6 @@ class BraketBackend(Backend):
                     self.rebase_pass(),
                     self._squash_pass,
                 ]
-            )
-        if self.supports_contextual_optimisation and optimisation_level > 0:
-            passes.append(
-                SimplifyInitial(allow_classical=False, create_all_qubits=True)
             )
         return SequencePass(passes)
 
@@ -699,7 +747,12 @@ class BraketBackend(Backend):
         **kwargs: KwargTypes,
     ) -> List[ResultHandle]:
         """
-        Supported `kwargs`: none
+        Supported `kwargs`:
+        - `postprocess`: apply end-of-circuit simplifications and classical
+          postprocessing to improve fidelity of results (bool, default False)
+        - `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
+          fidelity of results assuming all qubits initialized to zero (bool, default
+          False)
         """
         circuits = list(circuits)
         n_shots_list = Backend._get_n_shots_as_list(
@@ -726,6 +779,7 @@ class BraketBackend(Backend):
             self._check_all_circuits(circuits, nomeasure_warn=False)
 
         postprocess = kwargs.get("postprocess", False)
+        simplify_initial = kwargs.get("simplify_initial", False)
 
         handles = []
         for circ, n_shots in zip(circuits, n_shots_list):
@@ -736,6 +790,8 @@ class BraketBackend(Backend):
                 ppcirc_rep = ppcirc.to_dict()
             else:
                 c0, ppcirc, ppcirc_rep = circ, None, None
+            if self.supports_contextual_optimisation and simplify_initial:
+                SimplifyInitial(allow_classical=False, create_all_qubits=True).apply(c0)
             bkcirc, target_qubits, measures = self._to_bkcirc(c0)
             if want_state:
                 bkcirc.add_result_type(ResultType.StateVector())
@@ -854,7 +910,7 @@ class BraketBackend(Backend):
         aws_session: Optional[AwsSession] = kwargs.get("aws_session")
         if aws_session is None:
             if region is not None:
-                session = AwsSession(boto_session=boto3.Session(region_name=region))  # type: ignore
+                session = AwsSession(boto_session=boto3.Session(region_name=region))
             else:
                 session = AwsSession()
         else:
@@ -987,7 +1043,7 @@ class BraketBackend(Backend):
         res = task.result()
         return res.get_value_by_result_type(restype)  # type: ignore
 
-    def get_pauli_expectation_value(
+    def get_pauli_expectation_value(  # type: ignore
         self,
         state_circuit: Circuit,
         pauli: QubitPauliString,
@@ -1016,7 +1072,7 @@ class BraketBackend(Backend):
         observable, qbs = _obs_from_qps(state_circuit, pauli)
         return self._get_expectation_value(bkcirc, observable, qbs, n_shots, **kwargs)
 
-    def get_operator_expectation_value(
+    def get_operator_expectation_value(  # type: ignore
         self,
         state_circuit: Circuit,
         operator: QubitPauliOperator,

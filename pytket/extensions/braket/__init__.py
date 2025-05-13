@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Cambridge Quantum Computing
+# Copyright Quantinuum
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module for conversion from tket to braket
-"""
+"""Module for conversion from tket to braket"""
 
 # _metadata.py is copied to the folder after installation.
-from ._metadata import __extension_version__, __extension_name__  # type: ignore
+from ._metadata import __extension_version__, __extension_name__
 from .braket_convert import tk_to_braket, braket_to_tk
 from .backends import BraketBackend
 from .backends.config import BraketConfig, set_braket_config

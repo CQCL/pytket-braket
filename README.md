@@ -1,25 +1,25 @@
-# Pytket Extensions
-
-This repository contains the pytket-braket extension, using Quantinuum's
-[pytket](https://cqcl.github.io/tket/pytket/api/index.html) quantum SDK.
-
 # pytket-braket
 
-[Pytket](https://cqcl.github.io/tket/pytket/api/index.html) is a python module for interfacing
+[![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://tketusers.slack.com/join/shared_invite/zt-18qmsamj9-UqQFVdkRzxnXCcKtcarLRA#)
+[![Stack Exchange](https://img.shields.io/badge/StackExchange-%23ffffff.svg?style=for-the-badge&logo=StackExchange)](https://quantumcomputing.stackexchange.com/tags/pytket)
+
+[Pytket](https://tket.quantinuum.com/api-docs/index.html) is a python module for interfacing
 with CQC tket, a set of quantum programming tools.
 
 `pytket-braket` is an extension to `pytket` that allows `pytket` circuits to be
 executed on a range of devices and simulators via Amazon's Braket service.
 
 Some useful links:
-- [API Documentation](https://cqcl.github.io/pytket-braket/api/index.html)
+- [API Documentation](https://tket.quantinuum.com/extensions/pytket-braket/)
 
 ## Getting started
 
-`pytket-braket` is available for Python 3.9, 3.10 and 3.11, on Linux, MacOS
+`pytket-braket` is compatible with Python versions 3.10 to 3.13 on Linux, MacOS
 and Windows. To install, run:
 
-```pip install pytket-braket```
+```shell
+pip install pytket-braket
+```
 
 This will install `pytket` if it isn't already installed, and add new classes
 and methods into the `pytket.extensions` namespace.
@@ -41,7 +41,7 @@ pip install -e .
 ## Contributing
 
 Pull requests are welcome. To make a PR, first fork the repo, make your proposed
-changes on the `develop` branch, and open a PR from your fork. If it passes
+changes on the `main` branch, and open a PR from your fork. If it passes
 tests and is accepted after review, it will be merged in.
 
 ### Code style
