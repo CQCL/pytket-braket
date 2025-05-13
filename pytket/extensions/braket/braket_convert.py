@@ -14,18 +14,16 @@
 
 """Conversion from tket to braket"""
 
+from collections.abc import Callable
 from typing import (
-    cast,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    TypeVar,
     TYPE_CHECKING,
+    Any,
+    TypeVar,
+    cast,
 )
+
 from numpy import pi
+
 from braket.circuits import Circuit as BK_Circuit  # type: ignore
 from pytket.circuit import Circuit, OpType, Qubit
 
@@ -33,12 +31,12 @@ if TYPE_CHECKING:
     from pytket.circuit import Node
 
 
-def tk_to_braket(
+def tk_to_braket(  # noqa: PLR0912, PLR0915
     tkcirc: Circuit,
     mapped_qubits: bool = False,
-    forced_qubits: Optional[List[int]] = None,
+    forced_qubits: list[int] | None = None,
     force_ops_on_target_qubits: bool = False,
-) -> Tuple[BK_Circuit, List[int], Dict[int, int]]:
+) -> tuple[BK_Circuit, list[int], dict[int, int]]:
     """
     Convert a tket :py:class:`Circuit` to a braket circuit.
 
@@ -143,7 +141,7 @@ def tk_to_braket(
     return (bkcirc, target_qubits, measures)
 
 
-def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:
+def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:  # noqa: PLR0912, PLR0915
     """
     Convert a braket circuit to a tket :py:class:`Circuit`
 
@@ -230,8 +228,8 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:
 
 
 def get_avg_characterisation(
-    characterisation: Dict[str, Any],
-) -> Dict[str, Dict["Node", float]]:
+    characterisation: dict[str, Any],
+) -> dict[str, dict["Node", float]]:
     """
     Convert gate-specific characterisation into readout, one- and two-qubit errors
 
@@ -242,21 +240,21 @@ def get_avg_characterisation(
     K = TypeVar("K")
     V1 = TypeVar("V1")
     V2 = TypeVar("V2")
-    map_values_t = Callable[[Callable[[V1], V2], Dict[K, V1]], Dict[K, V2]]
+    map_values_t = Callable[[Callable[[V1], V2], dict[K, V1]], dict[K, V2]]
     map_values: map_values_t = lambda f, d: {k: f(v) for k, v in d.items()}
 
     node_errors = cast(
-        Dict["Node", Dict[OpType, float]], characterisation["NodeErrors"]
+        "dict[Node, dict[OpType, float]]", characterisation["NodeErrors"]
     )
     link_errors = cast(
-        Dict[Tuple["Node", "Node"], Dict[OpType, float]], characterisation["EdgeErrors"]
+        "dict[tuple[Node, Node], dict[OpType, float]]", characterisation["EdgeErrors"]
     )
     readout_errors = cast(
-        Dict["Node", List[List[float]]], characterisation["ReadoutErrors"]
+        "dict[Node, list[list[float]]]", characterisation["ReadoutErrors"]
     )
 
-    avg: Callable[[Dict[Any, float]], float] = lambda xs: sum(xs.values()) / len(xs)
-    avg_mat: Callable[[List[List[float]]], float] = (
+    avg: Callable[[dict[Any, float]], float] = lambda xs: sum(xs.values()) / len(xs)
+    avg_mat: Callable[[list[list[float]]], float] = (
         lambda xs: (xs[0][1] + xs[1][0]) / 2.0
     )
     avg_readout_errors = map_values(avg_mat, readout_errors)
