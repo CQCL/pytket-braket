@@ -12,66 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from itertools import permutations
 import json
-import warnings
-from enum import Enum
 import time
+import warnings
+from collections.abc import Callable, Iterable, Sequence
+from enum import Enum
+from itertools import permutations
 from typing import (
-    cast,
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Union,
-    Tuple,
-    Set,
     TYPE_CHECKING,
+    Any,
+    cast,
 )
 from uuid import uuid4
+
+import boto3
+import numpy as np
+
 import braket  # type: ignore
+import braket.circuits  # type: ignore
 from braket.aws import AwsDevice, AwsSession  # type: ignore
 from braket.aws.aws_device import AwsDeviceType  # type: ignore
 from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
-import braket.circuits  # type: ignore
 from braket.circuits.observable import Observable  # type: ignore
 from braket.circuits.qubit_set import QubitSet  # type: ignore
 from braket.circuits.result_type import ResultType  # type: ignore
 from braket.device_schema import DeviceActionType  # type: ignore
 from braket.devices import LocalSimulator  # type: ignore
 from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
-import boto3
-import numpy as np
+from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
-from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backend_exceptions import CircuitNotRunError
+from pytket.backends.backendinfo import BackendInfo
 from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
-from pytket.extensions.braket.braket_convert import (
-    tk_to_braket,
-    get_avg_characterisation,
-)
-from pytket.extensions.braket._metadata import __extension_version__
 from pytket.circuit import Circuit, OpType
+from pytket.extensions.braket._metadata import __extension_version__
+from pytket.extensions.braket.braket_convert import (
+    get_avg_characterisation,
+    tk_to_braket,
+)
 from pytket.passes import (
-    BasePass,
-    CXMappingPass,
-    RemoveRedundancies,
-    SequencePass,
-    SynthesiseTket,
-    FullPeepholeOptimise,
-    CliffordSimp,
-    DecomposeBoxes,
-    SimplifyInitial,
-    NaivePlacementPass,
     AutoRebase,
     AutoSquash,
+    BasePass,
+    CliffordSimp,
+    CXMappingPass,
+    DecomposeBoxes,
+    FullPeepholeOptimise,
+    NaivePlacementPass,
+    RemoveRedundancies,
+    SequencePass,
+    SimplifyInitial,
+    SynthesiseTket,
 )
 from pytket.pauli import Pauli, QubitPauliString
+from pytket.placement import NoiseAwarePlacement
 from pytket.predicates import (
     ConnectivityPredicate,
     GateSetPredicate,
@@ -82,8 +78,6 @@ from pytket.predicates import (
     NoSymbolsPredicate,
     Predicate,
 )
-from pytket.architecture import Architecture, FullyConnected
-from pytket.placement import NoiseAwarePlacement
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.outcomearray import OutcomeArray
@@ -192,7 +186,7 @@ _observables = {
 
 def _obs_from_qps(
     circuit: Circuit, pauli: QubitPauliString
-) -> Tuple[Observable, QubitSet]:
+) -> tuple[Observable, QubitSet]:
     obs, qbs = [], []
     for q, p in pauli.map.items():
         obs.append(_observables[p])
@@ -205,14 +199,14 @@ def _obs_from_qpo(operator: QubitPauliOperator, n_qubits: int) -> Observable:
     return Observable.Hermitian(H)
 
 
-def _get_result(
-    completed_task: Union[AwsQuantumTask, LocalQuantumTask],
-    target_qubits: List[int],
-    measures: Dict[int, int],
+def _get_result(  # noqa: PLR0913
+    completed_task: AwsQuantumTask | LocalQuantumTask,
+    target_qubits: list[int],
+    measures: dict[int, int],
     want_state: bool,
     want_dm: bool,
-    ppcirc: Optional[Circuit] = None,
-) -> Dict[str, BackendResult]:
+    ppcirc: Circuit | None = None,
+) -> dict[str, BackendResult]:
     """Get a result from a completed task.
 
     :param completed_task: braket task
@@ -232,7 +226,7 @@ def _get_result(
             m = result.get_value_by_result_type(
                 ResultType.DensityMatrix(target=target_qubits)
             )
-            if type(completed_task) == AwsQuantumTask:
+            if type(completed_task) == AwsQuantumTask:  # noqa: E721
                 kwargs["density_matrix"] = np.array(
                     [[complex(x, y) for x, y in row] for row in m], dtype=complex
                 )
@@ -259,17 +253,17 @@ class BraketBackend(Backend):
 
     _persistent_handles = True
 
-    def __init__(
+    def __init__(  # noqa: PLR0912, PLR0913, PLR0915
         self,
         local: bool = False,
         local_device: str = "default",
-        device: Optional[str] = None,
+        device: str | None = None,
         region: str = "",
-        s3_bucket: Optional[str] = None,
-        s3_folder: Optional[str] = None,
-        device_type: Optional[str] = None,
-        provider: Optional[str] = None,
-        aws_session: Optional[AwsSession] = None,
+        s3_bucket: str | None = None,
+        s3_folder: str | None = None,
+        device_type: str | None = None,
+        provider: str | None = None,
+        aws_session: AwsSession | None = None,
     ):
         """
         Construct a new braket backend.
@@ -329,7 +323,7 @@ class BraketBackend(Backend):
                 "arn:aws:braket:"
                 + region
                 + "::"
-                + "/".join(
+                + "/".join(  # noqa: FLY002
                     ["device", device_type, provider, device],
                 ),
                 aws_session=self._aws_session,
@@ -338,11 +332,11 @@ class BraketBackend(Backend):
             if s3_bucket is None or s3_folder is None:
                 self._s3_dest = None
                 if s3_bucket is None and s3_folder is not None:
-                    warnings.warn(
+                    warnings.warn(  # noqa: B028
                         "'s3_bucket' is missing, use the default s3 destination."
                     )
                 elif s3_bucket is not None and s3_folder is None:
-                    warnings.warn(
+                    warnings.warn(  # noqa: B028
                         "'s3_folder' is missing, use the default s3 destination."
                     )
             else:
@@ -364,7 +358,7 @@ class BraketBackend(Backend):
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
 
-        supported_ops = set(op.lower() for op in device_info["supportedOperations"])
+        supported_ops = set(op.lower() for op in device_info["supportedOperations"])  # noqa: C401
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
@@ -406,7 +400,7 @@ class BraketBackend(Backend):
         )
 
         arch, self._all_qubits = self._get_arch_info(props, self._device_type)
-        self._characteristics: Optional[Dict] = None
+        self._characteristics: dict | None = None
         if self._device_type == _DeviceType.QPU:
             self._characteristics = props["provider"]
         self._backend_info = self._get_backend_info(
@@ -451,8 +445,8 @@ class BraketBackend(Backend):
 
     @staticmethod
     def _get_gate_set(
-        supported_ops: Set[str], device_type: _DeviceType
-    ) -> Tuple[Set[OpType], Set[OpType]]:
+        supported_ops: set[str], device_type: _DeviceType
+    ) -> tuple[set[OpType], set[OpType]]:
         multiqs = set()
         singleqs = set()
         if not {"cnot", "rx", "rz", "x"} <= supported_ops:
@@ -475,8 +469,8 @@ class BraketBackend(Backend):
 
     @staticmethod
     def _get_arch_info(
-        device_properties: Dict[str, Any], device_type: _DeviceType
-    ) -> Tuple[Architecture | FullyConnected, List[int]]:
+        device_properties: dict[str, Any], device_type: _DeviceType
+    ) -> tuple[Architecture | FullyConnected, list[int]]:
         # return the architecture, and all_qubits
         paradigm = device_properties["paradigm"]
         n_qubits = paradigm["qubitCount"]
@@ -484,13 +478,13 @@ class BraketBackend(Backend):
         if device_type == _DeviceType.QPU:
             connectivity = paradigm["connectivity"]
             if connectivity["fullyConnected"]:
-                all_qubits: List = list(range(n_qubits))
+                all_qubits: list = list(range(n_qubits))
             else:
                 schema = device_properties["provider"]["braketSchemaHeader"]
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
                 if schema == IQM_SCHEMA:
-                    connectivity_graph = dict(
+                    connectivity_graph = dict(  # noqa: C402
                         (int(k) - 1, [int(v) - 1 for v in l])
                         for k, l in connectivity_graph.items()
                     )
@@ -503,7 +497,7 @@ class BraketBackend(Backend):
                             all_qubits_set.add(l - 1)
                     all_qubits = list(all_qubits_set)
                 elif schema == RIGETTI_SCHEMA:
-                    connectivity_graph = dict(
+                    connectivity_graph = dict(  # noqa: C402
                         (int(k), [int(v) for v in l])
                         for k, l in connectivity_graph.items()
                     )
@@ -533,20 +527,20 @@ class BraketBackend(Backend):
         cls,
         arch: Architecture | FullyConnected,
         device_name: str,
-        singleqs: Set[OpType],
-        multiqs: Set[OpType],
-        characteristics: Optional[Dict[str, Any]],
+        singleqs: set[OpType],
+        multiqs: set[OpType],
+        characteristics: dict[str, Any] | None,
     ) -> BackendInfo:
         if characteristics is not None:
             schema = characteristics["braketSchemaHeader"]
             if schema == IONQ_SCHEMA:
                 fid = characteristics["fidelity"]
-                get_node_error: Callable[["Node"], float] = lambda n: 1.0 - cast(
-                    float, fid["1Q"]["mean"]
+                get_node_error: Callable[[Node], float] = lambda n: 1.0 - cast(
+                    "float", fid["1Q"]["mean"]
                 )
-                get_readout_error: Callable[["Node"], float] = lambda n: 0.0
-                get_link_error: Callable[["Node", "Node"], float] = (
-                    lambda n0, n1: 1.0 - cast(float, fid["2Q"]["mean"])
+                get_readout_error: Callable[[Node], float] = lambda n: 0.0
+                get_link_error: Callable[[Node, Node], float] = (
+                    lambda n0, n1: 1.0 - cast("float", fid["2Q"]["mean"])
                 )
             elif schema == RIGETTI_SCHEMA:
                 specs = characteristics["specs"]
@@ -564,45 +558,46 @@ class BraketBackend(Backend):
                 for instruction in instructions[4]["sites"]:
                     node2q = str(instruction["node_ids"])
                     specs2q[node2q] = instruction["characteristics"][0]["error"]
-                get_node_error = lambda n: cast(float, specs1qrb[f"[{n.index[0]}]"])
+                get_node_error = lambda n: cast("float", specs1qrb[f"[{n.index[0]}]"])
                 get_readout_error = lambda n: 1.0 - cast(
-                    float, specs1qro[f"[{n.index[0]}]"]
+                    "float", specs1qro[f"[{n.index[0]}]"]
                 )
                 get_link_error = lambda n0, n1: cast(
-                    float,
+                    "float",
                     specs2q[
-                        f"[{min(n0.index[0],n1.index[0])}, "
-                        f"{max(n0.index[0],n1.index[0])}]"
+                        f"[{min(n0.index[0], n1.index[0])}, "
+                        f"{max(n0.index[0], n1.index[0])}]"
                     ],
                 )
             elif schema == IQM_SCHEMA:
                 properties = characteristics["properties"]
                 props1q = {}
-                for key in properties["one_qubit"].keys():
+                for key in properties["one_qubit"].keys():  # noqa: SIM118
                     node1q = str(int(key) - 1)
                     props1q[node1q] = properties["one_qubit"][key]
                 props2q = {}
-                for key in properties["two_qubit"].keys():
+                for key in properties["two_qubit"].keys():  # noqa: SIM118
                     ind = key.index("-")
-                    node2q1, node2q2 = str(int(key[:ind]) - 1), str(
-                        int(key[ind + 1 :]) - 1
+                    node2q1, node2q2 = (
+                        str(int(key[:ind]) - 1),
+                        str(int(key[ind + 1 :]) - 1),
                     )
                     props2q[node2q1 + "-" + node2q2] = properties["two_qubit"][key]
                 get_node_error = lambda n: 1.0 - cast(
-                    float, props1q[f"{n.index[0]}"]["f1Q_simultaneous_RB"]
+                    "float", props1q[f"{n.index[0]}"]["f1Q_simultaneous_RB"]
                 )
                 get_readout_error = lambda n: 1.0 - cast(
-                    float, props1q[f"{n.index[0]}"]["fRO"]
+                    "float", props1q[f"{n.index[0]}"]["fRO"]
                 )
                 get_link_error = lambda n0, n1: 1.0 - cast(
-                    float,
+                    "float",
                     props2q[
-                        f"{min(n0.index[0],n1.index[0])}-{max(n0.index[0],n1.index[0])}"
+                        f"{min(n0.index[0], n1.index[0])}-{max(n0.index[0], n1.index[0])}"
                     ]["fCZ"],
                 )
 
             # readout error as symmetric 2x2 matrix
-            to_sym_mat: Callable[[float], List[List[float]]] = lambda x: [
+            to_sym_mat: Callable[[float], list[list[float]]] = lambda x: [
                 [1.0 - x, x],
                 [x, 1.0 - x],
             ]
@@ -616,12 +611,12 @@ class BraketBackend(Backend):
 
             # Construct a fake coupling map if we have a FullyConnected architecture,
             # otherwise use the coupling provided by the Architecture class.
-            coupling: list[tuple["Node", "Node"]]
+            coupling: list[tuple[Node, Node]]
             if isinstance(arch, FullyConnected):
                 # cast is needed as mypy does not know that we passed a fixed
                 # integer to `permutations`.
                 coupling = cast(
-                    list[tuple["Node", "Node"]], list(permutations(arch.nodes, 2))
+                    "list[tuple[Node, Node]]", list(permutations(arch.nodes, 2))
                 )
             else:
                 coupling = arch.coupling
@@ -651,7 +646,7 @@ class BraketBackend(Backend):
         return backend_info
 
     @property
-    def required_predicates(self) -> List[Predicate]:
+    def required_predicates(self) -> list[Predicate]:
         return self._req_preds
 
     def rebase_pass(self) -> BasePass:
@@ -662,7 +657,7 @@ class BraketBackend(Backend):
         passes = [DecomposeBoxes()]
         if optimisation_level == 1:
             passes.append(SynthesiseTket())
-        elif optimisation_level == 2:
+        elif optimisation_level == 2:  # noqa: PLR2004
             passes.append(FullPeepholeOptimise())
         passes.append(self.rebase_pass())
         if (
@@ -676,7 +671,8 @@ class BraketBackend(Backend):
                 CXMappingPass(
                     arch,
                     NoiseAwarePlacement(
-                        arch, **get_avg_characterisation(self.characterisation)  # type: ignore
+                        arch,
+                        **get_avg_characterisation(self.characterisation),  # type: ignore
                     ),
                     directed_cx=False,
                     delay_measures=True,
@@ -687,7 +683,7 @@ class BraketBackend(Backend):
             # rebase_pass here. But we checked above that it is.
         if optimisation_level == 1:
             passes.extend([RemoveRedundancies(), self._squash_pass])
-        if optimisation_level == 2:
+        if optimisation_level == 2:  # noqa: PLR2004
             passes.extend(
                 [
                     CliffordSimp(False),
@@ -710,21 +706,20 @@ class BraketBackend(Backend):
 
     def _run(
         self, bkcirc: braket.circuits.Circuit, n_shots: int = 0, **kwargs: KwargTypes
-    ) -> Union[AwsQuantumTask, LocalQuantumTask]:
+    ) -> AwsQuantumTask | LocalQuantumTask:
         if self._device_type == _DeviceType.LOCAL:
             return self._device.run(bkcirc, shots=n_shots, **kwargs)
-        else:
-            return self._device.run(
-                bkcirc,
-                self._s3_dest,
-                shots=n_shots,
-                disable_qubit_rewiring=self._supports_client_qubit_mapping,
-                **kwargs,
-            )
+        return self._device.run(
+            bkcirc,
+            self._s3_dest,
+            shots=n_shots,
+            disable_qubit_rewiring=self._supports_client_qubit_mapping,
+            **kwargs,
+        )
 
     def _to_bkcirc(
         self, circuit: Circuit
-    ) -> Tuple[braket.circuits.Circuit, List[int], Dict[int, int]]:
+    ) -> tuple[braket.circuits.Circuit, list[int], dict[int, int]]:
         return tk_to_braket(
             circuit,
             mapped_qubits=(self._device_type == _DeviceType.QPU),
@@ -739,13 +734,13 @@ class BraketBackend(Backend):
             force_ops_on_target_qubits=(OpType.noop in self.backend_info.gate_set),
         )
 
-    def process_circuits(
+    def process_circuits(  # noqa: PLR0912
         self,
         circuits: Sequence[Circuit],
-        n_shots: Union[None, int, Sequence[Optional[int]]] = None,
+        n_shots: None | int | Sequence[int | None] = None,
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> List[ResultHandle]:
+    ) -> list[ResultHandle]:
         """
         Supported `kwargs`:
         - `postprocess`: apply end-of-circuit simplifications and classical
@@ -755,7 +750,7 @@ class BraketBackend(Backend):
           False)
         """
         circuits = list(circuits)
-        n_shots_list = Backend._get_n_shots_as_list(
+        n_shots_list = Backend._get_n_shots_as_list(  # noqa: SLF001
             n_shots, len(circuits), optional=True, set_zero=True
         )
 
@@ -763,7 +758,7 @@ class BraketBackend(Backend):
             raise RuntimeError("Backend does not support shots or state")
 
         if any(
-            map(
+            map(  # noqa: C417
                 lambda n: n > 0
                 and (n < self._sample_min_shots or n > self._sample_max_shots),
                 n_shots_list,
@@ -782,7 +777,7 @@ class BraketBackend(Backend):
         simplify_initial = kwargs.get("simplify_initial", False)
 
         handles = []
-        for circ, n_shots in zip(circuits, n_shots_list):
+        for circ, n_shots in zip(circuits, n_shots_list, strict=False):  # noqa: PLR1704
             want_state = (n_shots == 0) and self.supports_state
             want_dm = (n_shots == 0) and self.supports_density_matrix
             if postprocess:
@@ -836,14 +831,14 @@ class BraketBackend(Backend):
         return handles
 
     def _update_cache_result(
-        self, handle: ResultHandle, result_dict: Dict[str, BackendResult]
+        self, handle: ResultHandle, result_dict: dict[str, BackendResult]
     ) -> None:
         if handle in self._cache:
             self._cache[handle].update(result_dict)
         else:
             self._cache[handle] = result_dict
 
-    def circuit_status(self, handle: ResultHandle) -> CircuitStatus:
+    def circuit_status(self, handle: ResultHandle) -> CircuitStatus:  # noqa: PLR0911
         if self._device_type == _DeviceType.LOCAL:
             return CircuitStatus(StatusEnum.COMPLETED)
         task_id, target_qubits, measures, want_state, want_dm, ppcirc_str = handle
@@ -854,9 +849,9 @@ class BraketBackend(Backend):
         state = task.state()
         if state == "FAILED":
             return CircuitStatus(StatusEnum.ERROR, task.metadata()["failureReason"])
-        elif state in ["CANCELLED", "CANCELLING"]:
+        if state in ["CANCELLED", "CANCELLING"]:
             return CircuitStatus(StatusEnum.CANCELLED)
-        elif state == "COMPLETED":
+        if state == "COMPLETED":
             self._update_cache_result(
                 handle,
                 _get_result(
@@ -869,15 +864,14 @@ class BraketBackend(Backend):
                 ),
             )
             return CircuitStatus(StatusEnum.COMPLETED)
-        elif state == "QUEUED" or state == "CREATED":
+        if state == "QUEUED" or state == "CREATED":  # noqa: PLR1714
             return CircuitStatus(StatusEnum.QUEUED)
-        elif state == "RUNNING":
+        if state == "RUNNING":
             return CircuitStatus(StatusEnum.RUNNING)
-        else:
-            return CircuitStatus(StatusEnum.ERROR, f"Unrecognized state '{state}'")
+        return CircuitStatus(StatusEnum.ERROR, f"Unrecognized state '{state}'")
 
     @property
-    def characterisation(self) -> Optional[Dict[str, Any]]:
+    def characterisation(self) -> dict[str, Any] | None:
         node_errors = self._backend_info.all_node_gate_errors
         edge_errors = self._backend_info.all_edge_gate_errors
         readout_errors = self._backend_info.all_readout_errors
@@ -894,7 +888,7 @@ class BraketBackend(Backend):
         return self._backend_info
 
     @classmethod
-    def available_devices(cls, **kwargs: Any) -> List[BackendInfo]:
+    def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
         """
         See :py:meth:`pytket.backends.Backend.available_devices`.
         Supported kwargs:
@@ -906,18 +900,17 @@ class BraketBackend(Backend):
           will be used to create a new session with the specified region. Otherwise,
           a default new session will be created
         """
-        region: Optional[str] = kwargs.get("region")
-        aws_session: Optional[AwsSession] = kwargs.get("aws_session")
+        region: str | None = kwargs.get("region")
+        aws_session: AwsSession | None = kwargs.get("aws_session")
         if aws_session is None:
             if region is not None:
                 session = AwsSession(boto_session=boto3.Session(region_name=region))
             else:
                 session = AwsSession()
+        elif region is not None:
+            session = aws_session.copy_session(region=region)
         else:
-            if region is not None:
-                session = aws_session.copy_session(region=region)
-            else:
-                session = aws_session.copy_session(region=aws_session.region)
+            session = aws_session.copy_session(region=aws_session.region)
 
         devices = session.search_devices(statuses=["ONLINE"])
 
@@ -935,7 +928,7 @@ class BraketBackend(Backend):
             props = aws_device.properties.dict()
             try:
                 device_info = props["action"][DeviceActionType.JAQCD]
-                supported_ops = set(
+                supported_ops = set(  # noqa: C401
                     op.lower() for op in device_info["supportedOperations"]
                 )
                 singleqs, multiqs = cls._get_gate_set(supported_ops, device_type)
@@ -964,18 +957,18 @@ class BraketBackend(Backend):
         try:
             return super().get_result(handle)
         except CircuitNotRunError:
-            timeout = cast(float, kwargs.get("timeout", 60.0))
-            wait = cast(float, kwargs.get("wait", 1.0))
+            timeout = cast("float", kwargs.get("timeout", 60.0))
+            wait = cast("float", kwargs.get("wait", 1.0))
             # Wait for job to finish; result will then be in the cache.
             end_time = (time.time() + timeout) if (timeout is not None) else None
             while (end_time is None) or (time.time() < end_time):
                 circuit_status = self.circuit_status(handle)
                 if circuit_status.status is StatusEnum.COMPLETED:
-                    return cast(BackendResult, self._cache[handle]["result"])
+                    return cast("BackendResult", self._cache[handle]["result"])
                 if circuit_status.status is StatusEnum.ERROR:
-                    raise RuntimeError(circuit_status.message)
+                    raise RuntimeError(circuit_status.message)  # noqa: B904
                 time.sleep(wait)
-            raise RuntimeError(f"Timed out: no results after {timeout} seconds.")
+            raise RuntimeError(f"Timed out: no results after {timeout} seconds.")  # noqa: B904
 
     def _get_expectation_value(
         self,
@@ -1149,7 +1142,7 @@ class BraketBackend(Backend):
     def get_probabilities(
         self,
         circuit: Circuit,
-        qubits: Union[Iterable[int], None] = None,
+        qubits: Iterable[int] | None = None,
         n_shots: int = 0,
         valid_check: bool = True,
         **kwargs: KwargTypes,
@@ -1194,10 +1187,10 @@ class BraketBackend(Backend):
     def get_amplitudes(
         self,
         circuit: Circuit,
-        states: List[str],
+        states: list[str],
         valid_check: bool = True,
         **kwargs: KwargTypes,
-    ) -> Dict[str, complex]:
+    ) -> dict[str, complex]:
         """
         Compute the complex coefficients of the final state.
 

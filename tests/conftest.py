@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional
 import os
-import pytest
+
 import boto3
-from braket.aws.aws_session import AwsSession  # type: ignore
+import pytest
 from _pytest.fixtures import SubRequest
+from braket.aws.aws_session import AwsSession  # type: ignore
+
 from pytket.extensions.braket import BraketBackend
 
 
-def get_authenticated_aws_session(region: Optional[str] = None) -> Optional[AwsSession]:
+def get_authenticated_aws_session(region: str | None = None) -> AwsSession | None:
     if os.getenv("PYTKET_RUN_REMOTE_TESTS") is not None:
         # Authenticated AwsSession used in the authenticated_braket_backend
         # The values for the access key id and secret access key are taken from the

@@ -13,20 +13,22 @@
 # limitations under the License.
 
 import json
+import os
 from collections import Counter
 from typing import cast
-import os
-from hypothesis import given, settings, strategies
+
 import numpy as np
 import pytest
-from pytket.extensions.braket import BraketBackend
+from hypothesis import given, settings, strategies
+
 from pytket.architecture import FullyConnected
-from pytket.circuit import Circuit, OpType, Qubit, Bit
+from pytket.circuit import Bit, Circuit, OpType, Qubit
+from pytket.extensions.braket import BraketBackend
+from pytket.passes import BasePass, SequencePass
 from pytket.pauli import Pauli, QubitPauliString
-from pytket.passes import SequencePass, BasePass
 from pytket.utils.expectations import (
-    get_pauli_expectation_value,
     get_operator_expectation_value,
+    get_pauli_expectation_value,
 )
 from pytket.utils.operators import QubitPauliOperator
 
@@ -40,8 +42,8 @@ REASON = "PYTKET_RUN_REMOTE_TESTS not set (requires configuration of AWS storage
 
 def skip_if_device_is_not_available(backend: BraketBackend) -> None:
     """Skip the test if the device of the provided `backend` is not available"""
-    if not backend._device.is_available:
-        pytest.skip(f"{backend._device.arn} is not available")
+    if not backend._device.is_available:  # noqa: SLF001
+        pytest.skip(f"{backend._device.arn} is not available")  # noqa: SLF001
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -173,12 +175,12 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     assert chars is not None
     assert chars is not None
     assert all(s in chars for s in ["NodeErrors", "EdgeErrors", "ReadoutErrors"])
-    assert b._characteristics is not None
-    fid = b._characteristics["fidelity"]
+    assert b._characteristics is not None  # noqa: SLF001
+    fid = b._characteristics["fidelity"]  # noqa: SLF001
     assert "1Q" in fid
     assert "2Q" in fid
     assert "spam" in fid
-    tim = b._characteristics["timing"]
+    tim = b._characteristics["timing"]  # noqa: SLF001
     assert "T1" in tim
     assert "T2" in tim
 
@@ -548,7 +550,7 @@ def test_postprocess_ionq(authenticated_braket_backend: BraketBackend) -> None:
     c.measure_all()
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, n_shots=10, postprocess=True)
-    ppcirc = Circuit.from_dict(json.loads(cast(str, h[5])))
+    ppcirc = Circuit.from_dict(json.loads(cast("str", h[5])))
     ppcmds = ppcirc.get_commands()
     assert len(ppcmds) > 0
     assert all(ppcmd.op.type == OpType.ClassicalTransform for ppcmd in ppcmds)
@@ -561,12 +563,13 @@ def test_retrieve_available_devices(
     authenticated_braket_backend: BraketBackend,
 ) -> None:
     backend_infos = authenticated_braket_backend.available_devices(
-        aws_session=authenticated_braket_backend._aws_session
+        aws_session=authenticated_braket_backend._aws_session  # noqa: SLF001
     )
     assert len(backend_infos) > 0
     # Test annealers are filtered out.
     backend_infos = authenticated_braket_backend.available_devices(
-        region="us-west-2", aws_session=authenticated_braket_backend._aws_session
+        region="us-west-2",
+        aws_session=authenticated_braket_backend._aws_session,  # noqa: SLF001
     )
     assert len(backend_infos) > 0
 
