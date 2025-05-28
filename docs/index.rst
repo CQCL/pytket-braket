@@ -18,6 +18,11 @@ MacOS and Windows. To install, run:
     changelog.rst
 
 .. toctree::
+   :caption: Example Notebooks
+
+   examples/pytket-braket_example-ver20250515.ipynb
+
+.. toctree::
    :caption: Useful links
 
    Issue tracker <https://github.com/CQCL/pytket-braket/issues>
