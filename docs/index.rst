@@ -20,7 +20,7 @@ MacOS and Windows. To install, run:
 .. toctree::
    :caption: Example Notebooks
 
-   examples/pytket-braket_example-ver20250515.ipynb
+   examples/braket_backend_usage.ipynb
 
 .. toctree::
    :caption: Useful links
