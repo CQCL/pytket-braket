@@ -72,6 +72,10 @@ from pytket.passes import (
     SimplifyInitial,
     NaivePlacementPass,
     AutoRebase,
+    FlattenRegisters,
+    DefaultMappingPass,
+    KAKDecomposition,
+    DelayMeasures,
 )
 from pytket.circuit_library import TK1_to_RzRx
 from pytket.pauli import Pauli, QubitPauliString
@@ -426,12 +430,12 @@ class BraketBackend(Backend):
             supported_ops, self._device_type, self._verbatim
         )
 
-        arch, self._all_qubits = self._get_arch_info(props, self._device_type)
+        self._arch, self._all_qubits = self._get_arch_info(props, self._device_type)
         self._characteristics: Optional[Dict] = None
         if self._device_type == _DeviceType.QPU:
             self._characteristics = props["provider"]
         self._backend_info = self._get_backend_info(
-            arch,
+            self._arch,
             device,
             self._singleqs,
             self._multiqs,
@@ -463,9 +467,9 @@ class BraketBackend(Backend):
         ]
 
         if self._device_type == _DeviceType.QPU and not isinstance(
-            arch, FullyConnected
+            self._arch, FullyConnected
         ):
-            self._req_preds.append(ConnectivityPredicate(arch))
+            self._req_preds.append(ConnectivityPredicate(self._arch))
 
         self._rebase_pass = RebaseCustom(
             self._multiqs | self._singleqs,
@@ -696,10 +700,48 @@ class BraketBackend(Backend):
     def rebase_pass(self) -> BasePass:
         return self._rebase_pass
 
+    def rebase_pass_ionq(self) -> BasePass:
+        return self._rebase_pass
+
+    def rebase_pass_iqm(self) -> BasePass:
+        # based on https://github.com/CQCL/pytket-iqm/blob/main/pytket/extensions/iqm/backends/iqm.py#L386
+        # CX replacement
+        c_cx = Circuit(2)
+        c_cx.add_gate(OpType.PhasedX, [-0.5, 0.5], [1])
+        c_cx.CZ(0, 1)
+        c_cx.add_gate(OpType.PhasedX, [0.5, 0.5], [1])
+        # TK1 replacement
+        c_tk1 = (
+            lambda a, b, c: Circuit(1)
+            .add_gate(OpType.PhasedX, [-1, (a - c) / 2], [0])
+            .add_gate(OpType.PhasedX, [1 + b, a], [0])
+        )
+        return RebaseCustom({OpType.CZ, OpType.PhasedX}, c_cx, c_tk1)
+
+    def rebase_pass_rigetti_ankaa3(self) -> BasePass:
+        # CX replacement
+        c_cx = Circuit(2)
+        c_cx.Rz(-3 / 2, 0)
+        c_cx.Rx(-1 / 2, 1)
+        c_cx.Rz(-1 / 2, 1)
+        c_cx.ISWAPMax(0, 1)
+        c_cx.Rx(1 / 2, 0)
+        c_cx.ISWAPMax(0, 1)
+        c_cx.Rz(-1 / 2, 1)
+        c_cx.Phase(3 / 4)
+        # TK1 replacement
+        c_tk1 = (
+            lambda a, b, c: Circuit(1)
+            .add_gate(OpType.Rz, [c], [0])
+            .add_gate(OpType.Rx, [b], [0])
+            .add_gate(OpType.Rz, [a], [0])
+        )
+        return RebaseCustom({OpType.ISWAP, OpType.Rz, OpType.Rx}, c_cx, c_tk1)
+
     def default_compilation_pass(self, optimisation_level: int = 1) -> BasePass:
         assert optimisation_level in range(3)
-        passes = [DecomposeBoxes()]
         if self._verbatim == False:
+            passes = [DecomposeBoxes()]
             if optimisation_level == 1:
                 passes.append(SynthesiseTket())
             elif optimisation_level == 2:
@@ -737,8 +779,45 @@ class BraketBackend(Backend):
                     ]
                 )
         if self._verbatim == True:
-            passes.append(AutoRebase(self.backend_info.gate_set))
-            passes.append(RemoveRedundancies())
+            if (
+                self._characteristics["braketSchemaHeader"]["name"]
+                == IQM_SCHEMA["name"]
+            ):
+                # based on https://github.com/CQCL/pytket-iqm/blob/main/pytket/extensions/iqm/backends/iqm.py#L173
+                passes = [DecomposeBoxes(), FlattenRegisters()]
+                if optimisation_level == 0:
+                    passes.append(
+                        self.rebase_pass_iqm()
+                    )  # to satisfy MaxTwoQubitGatesPredicate
+                elif optimisation_level == 1:
+                    passes.append(SynthesiseTket())
+                elif optimisation_level == 2:  # noqa: PLR2004
+                    passes.append(FullPeepholeOptimise())
+                passes.append(DefaultMappingPass(self._arch))
+                passes.append(DelayMeasures())
+                if optimisation_level == 2:  # noqa: PLR2004
+                    passes.append(KAKDecomposition(allow_swaps=False))
+                    passes.append(CliffordSimp(allow_swaps=False))
+                    passes.append(SynthesiseTket())
+                passes.append(self.rebase_pass_iqm())
+                passes.append(RemoveRedundancies())
+            elif (
+                self._characteristics["braketSchemaHeader"]["name"]
+                == RIGETTI_SCHEMA["name"]
+            ):
+                passes = [DecomposeBoxes(), FlattenRegisters()]
+                if optimisation_level == 1:
+                    passes.append(SynthesiseTket())
+                elif optimisation_level == 2:  # noqa: PLR2004
+                    passes.append(FullPeepholeOptimise())
+                passes.append(DefaultMappingPass(self._arch))
+                passes.append(DelayMeasures())
+                if optimisation_level == 2:  # noqa: PLR2004
+                    passes.append(KAKDecomposition(allow_swaps=False))
+                    passes.append(CliffordSimp(allow_swaps=False))
+                    passes.append(SynthesiseTket())
+                passes.append(self.rebase_pass_rigetti_ankaa3())
+                passes.append(RemoveRedundancies())
         return SequencePass(passes)
 
     @property
