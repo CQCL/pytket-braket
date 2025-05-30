@@ -374,7 +374,7 @@ class BraketBackend(Backend):
             else:
                 raise ValueError(f"Unsupported device type {aws_device_type}")
 
-        if self._verbatim == True:
+        if self._verbatim:
             if not aws_device_type == _DeviceType.QPU:
                 raise ValueError(f"The verbatim is not supported for {aws_device_type}")
 
@@ -386,10 +386,10 @@ class BraketBackend(Backend):
         if device_info is None:
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
-        if self._verbatim == False:
-            supported_ops = set(op.lower() for op in device_info["supportedOperations"])
-        else:
+        if self._verbatim:
             supported_ops = set(op.lower() for op in props["paradigm"]["nativeGateSet"])
+        else:
+            supported_ops = set(op.lower() for op in device_info["supportedOperations"])
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
@@ -506,7 +506,7 @@ class BraketBackend(Backend):
                         multiqs.add(tkt)
                     else:
                         singleqs.add(tkt)
-        else:
+        elif verbatim == True:
             for t in supported_ops:
                 tkt = _gate_types[t]
                 if tkt is not None:
@@ -778,7 +778,7 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        if self._verbatim == True:
+        elif self._verbatim == True:
             if (
                 self._characteristics["braketSchemaHeader"]["name"]
                 == IQM_SCHEMA["name"]
@@ -818,6 +818,13 @@ class BraketBackend(Backend):
                     passes.append(SynthesiseTket())
                 passes.append(self.rebase_pass_rigetti_ankaa3())
                 passes.append(RemoveRedundancies())
+            elif (
+                self._characteristics["braketSchemaHeader"]["name"]
+                == IonQ_SCHEMA["name"]
+            ):
+                raise ValueError(
+                    f"The verbatim has not been supported for IonQ devices yet."
+                )
         return SequencePass(passes)
 
     @property
@@ -844,7 +851,7 @@ class BraketBackend(Backend):
                     disable_qubit_rewiring=self._supports_client_qubit_mapping,
                     **kwargs,
                 )
-            else:
+            elif self._verbatim == True:
                 bkcirc_verbatim = BK_Circuit().add_verbatim_box(bkcirc)
                 return self._device.run(
                     bkcirc_verbatim,
