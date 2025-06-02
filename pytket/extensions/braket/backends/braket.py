@@ -726,13 +726,13 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        elif self._verbatim == True:
+        else:
             if (
                 self._characteristics["braketSchemaHeader"]["name"]
                 == IQM_SCHEMA["name"]
             ):
                 raise ValueError(
-                    f"The verbatim has not been supported for IQM devices yet."
+                    "The verbatim has not been supported for IQM devices yet."
                 )
             elif (
                 self._characteristics["braketSchemaHeader"]["name"]
@@ -759,7 +759,7 @@ class BraketBackend(Backend):
                 == IonQ_SCHEMA["name"]
             ):
                 raise ValueError(
-                    f"The verbatim has not been supported for IonQ devices yet."
+                    "The verbatim has not been supported for IonQ devices yet."
                 )
         return SequencePass(passes)
 
