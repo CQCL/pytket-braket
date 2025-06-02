@@ -748,7 +748,7 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             passes.append(self.rebase_pass())
             passes.append(RemoveRedundancies())
-        elif self._characteristics["braketSchemaHeader"]["name"] == IonQ_SCHEMA["name"]:
+        elif self._characteristics["braketSchemaHeader"]["name"] == IONQ_SCHEMA["name"]:
             raise ValueError(
                 "The verbatim has not been supported for IonQ devices yet."
             )
