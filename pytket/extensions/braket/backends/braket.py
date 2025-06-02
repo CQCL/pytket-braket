@@ -371,13 +371,9 @@ class BraketBackend(Backend):
             raise ValueError(f"Unsupported device {device}")
 
         if self._verbatim:
-            supported_ops = set(
-                op.lower() for op in props["paradigm"]["nativeGateSet"]
-            )  # noqa: C401
+            supported_ops = set(op.lower() for op in props["paradigm"]["nativeGateSet"])
         else:
-            supported_ops = set(  # noqa: C401
-                op.lower() for op in device_info["supportedOperations"]
-            )
+            supported_ops = set(op.lower() for op in device_info["supportedOperations"])
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
@@ -748,13 +744,14 @@ class BraketBackend(Backend):
                 disable_qubit_rewiring=True,
                 **kwargs,
             )
-        return self._device.run(
-            bkcirc,
-            self._s3_dest,
-            shots=n_shots,
-            disable_qubit_rewiring=self._supports_client_qubit_mapping,
-            **kwargs,
-        )
+        else:
+            return self._device.run(
+                bkcirc,
+                self._s3_dest,
+                shots=n_shots,
+                disable_qubit_rewiring=self._supports_client_qubit_mapping,
+                **kwargs,
+            )
 
     def _to_bkcirc(
         self, circuit: Circuit
@@ -1010,7 +1007,9 @@ class BraketBackend(Backend):
                 if circuit_status.status is StatusEnum.ERROR:
                     raise RuntimeError(circuit_status.message)  # noqa: B904
                 time.sleep(wait)
-            raise RuntimeError(f"Timed out: no results after {timeout} seconds.")
+            raise RuntimeError(
+                f"Timed out: no results after {timeout} seconds."
+            )  # noqa: B904
 
     def _get_expectation_value(
         self,
