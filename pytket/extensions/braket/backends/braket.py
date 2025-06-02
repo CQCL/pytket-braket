@@ -739,7 +739,7 @@ class BraketBackend(Backend):
     ) -> AwsQuantumTask | LocalQuantumTask:
         if self._device_type == _DeviceType.LOCAL:
             return self._device.run(bkcirc, shots=n_shots, **kwargs)
-        elif self._verbatim == False:
+        not self._verbatim:
             return self._device.run(
                 bkcirc,
                 self._s3_dest,
@@ -747,15 +747,14 @@ class BraketBackend(Backend):
                 disable_qubit_rewiring=self._supports_client_qubit_mapping,
                 **kwargs,
             )
-        elif self._verbatim == True:
-            bkcirc_verbatim = braket.circuits.Circuit().add_verbatim_box(bkcirc)
-            return self._device.run(
-                bkcirc_verbatim,
-                self._s3_dest,
-                shots=n_shots,
-                disable_qubit_rewiring=True,
-                **kwargs,
-            )
+        bkcirc_verbatim = braket.circuits.Circuit().add_verbatim_box(bkcirc)
+        return self._device.run(
+            bkcirc_verbatim,
+            self._s3_dest,
+            shots=n_shots,
+            disable_qubit_rewiring=True,
+            **kwargs,
+        )
 
     def _to_bkcirc(
         self, circuit: Circuit
