@@ -26,10 +26,9 @@ from typing import (
 from uuid import uuid4
 
 import boto3
-import numpy as np
-
 import braket  # type: ignore
 import braket.circuits  # type: ignore
+import numpy as np
 from braket.aws import AwsDevice, AwsSession  # type: ignore
 from braket.aws.aws_device import AwsDeviceType  # type: ignore
 from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
@@ -59,15 +58,15 @@ from pytket.passes import (
     CliffordSimp,
     CXMappingPass,
     DecomposeBoxes,
+    DefaultMappingPass,
+    FlattenRegisters,
     FullPeepholeOptimise,
+    KAKDecomposition,
     NaivePlacementPass,
     RemoveRedundancies,
     SequencePass,
     SimplifyInitial,
     SynthesiseTket,
-    FlattenRegisters,
-    DefaultMappingPass,
-    KAKDecomposition,
 )
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.placement import NoiseAwarePlacement
@@ -726,8 +725,6 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        elif self._characteristics["braketSchemaHeader"]["name"] == IQM_SCHEMA["name"]:
-            raise ValueError("The verbatim has not been supported for IQM devices yet.")
         elif (
             self._characteristics["braketSchemaHeader"]["name"]
             == RIGETTI_SCHEMA["name"]
@@ -748,10 +745,6 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             passes.append(self.rebase_pass())
             passes.append(RemoveRedundancies())
-        elif self._characteristics["braketSchemaHeader"]["name"] == IONQ_SCHEMA["name"]:
-            raise ValueError(
-                "The verbatim has not been supported for IonQ devices yet."
-            )
         return SequencePass(passes)
 
     @property
@@ -769,23 +762,15 @@ class BraketBackend(Backend):
     ) -> AwsQuantumTask | LocalQuantumTask:
         if self._device_type == _DeviceType.LOCAL:
             return self._device.run(bkcirc, shots=n_shots, **kwargs)
-        elif not self._verbatim:
-            return self._device.run(
-                bkcirc,
-                self._s3_dest,
-                shots=n_shots,
-                disable_qubit_rewiring=self._supports_client_qubit_mapping,
-                **kwargs,
-            )
-        elif self._verbatim:
-            bkcirc_verbatim = braket.circuits.Circuit().add_verbatim_box(bkcirc)
-            return self._device.run(
-                bkcirc_verbatim,
-                self._s3_dest,
-                shots=n_shots,
-                disable_qubit_rewiring=True,
-                **kwargs,
-            )
+        if self._verbatim:
+            bkcirc = braket.circuits.Circuit().add_verbatim_box(bkcirc)
+        return self._device.run(
+            bkcirc,
+            self._s3_dest,
+            shots=n_shots,
+            disable_qubit_rewiring=self._supports_client_qubit_mapping,
+            **kwargs,
+        )
 
     def _to_bkcirc(
         self, circuit: Circuit
