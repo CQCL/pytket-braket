@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, ClassVar, Dict, Optional, Type
 from dataclasses import dataclass
+from typing import Any, ClassVar
+
 from pytket.config import PytketExtConfig
 
 
@@ -23,28 +24,28 @@ class BraketConfig(PytketExtConfig):
 
     ext_dict_key: ClassVar[str] = "braket"
 
-    s3_bucket: Optional[str]
-    s3_folder: Optional[str]
-    device_type: Optional[str]
-    provider: Optional[str]
+    s3_bucket: str | None
+    s3_folder: str | None
+    device_type: str | None
+    provider: str | None
 
     @classmethod
     def from_extension_dict(
-        cls: Type["BraketConfig"], ext_dict: Dict[str, Any]
+        cls: type["BraketConfig"], ext_dict: dict[str, Any]
     ) -> "BraketConfig":
         return cls(
-            ext_dict.get("s3_bucket", None),
-            ext_dict.get("s3_folder", None),
-            ext_dict.get("device_type", None),
-            ext_dict.get("provider", None),
+            ext_dict.get("s3_bucket"),
+            ext_dict.get("s3_folder"),
+            ext_dict.get("device_type"),
+            ext_dict.get("provider"),
         )
 
 
 def set_braket_config(
-    s3_bucket: Optional[str] = None,
-    s3_folder: Optional[str] = None,
-    device_type: Optional[str] = None,
-    provider: Optional[str] = None,
+    s3_bucket: str | None = None,
+    s3_folder: str | None = None,
+    device_type: str | None = None,
+    provider: str | None = None,
 ) -> None:
     """Set default values for any of s3_bucket, s3_folder, device_type or provider
     for AWS Braket. Can be overridden in backend construction."""

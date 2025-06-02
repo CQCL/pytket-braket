@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import shutil
 import os
-from setuptools import setup, find_namespace_packages  # type: ignore
+import shutil
+
+from setuptools import find_namespace_packages, setup  # type: ignore
 
 metadata: dict = {}
 with open("_metadata.py") as fp:
@@ -37,13 +38,13 @@ setup(
         "Tracker": "https://github.com/CQCL/pytket-braket/issues",
     },
     description="Extension for pytket, providing access to Amazon Braket backends",
-    long_description=open("README.md").read(),
+    long_description=open("README.md").read(),  # noqa: SIM115
     long_description_content_type="text/markdown",
     license="Apache 2",
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket >= 2.0.1",
+        "pytket >= 2.4.1",
         "amazon-braket-sdk ~= 1.53",
         "amazon-braket-schemas ~= 1.23",
         "amazon-braket-default-simulator ~= 1.20",
