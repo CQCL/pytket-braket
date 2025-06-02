@@ -26,9 +26,10 @@ from typing import (
 from uuid import uuid4
 
 import boto3
+import numpy as np
+
 import braket  # type: ignore
 import braket.circuits  # type: ignore
-import numpy as np
 from braket.aws import AwsDevice, AwsSession  # type: ignore
 from braket.aws.aws_device import AwsDeviceType  # type: ignore
 from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
