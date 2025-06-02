@@ -30,11 +30,15 @@ from pytket.circuit import Circuit, OpType, Qubit
 if TYPE_CHECKING:
     from pytket.circuit import Node
 
-def normalize_angle(n):
+ANGEL_UPBOUND = 2
+
+
+def normalize_angle(n: float) -> float:
     n0 = n % 4
-    if n0 > 2:
+    if n0 > ANGEL_UPBOUND:
         n0 = n0 % -4
     return n0
+
 
 def tk_to_braket(  # noqa: PLR0912, PLR0915
     tkcirc: Circuit,
