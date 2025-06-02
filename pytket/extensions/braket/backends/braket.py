@@ -375,7 +375,9 @@ class BraketBackend(Backend):
         if self._verbatim:
             supported_ops = set(op.lower() for op in props["paradigm"]["nativeGateSet"])
         else:
-            supported_ops = set(op.lower() for op in device_info["supportedOperations"])  # noqa: C401
+            supported_ops = set(
+                op.lower() for op in device_info["supportedOperations"]
+            )  # noqa: C401
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
@@ -462,7 +464,7 @@ class BraketBackend(Backend):
 
     @staticmethod
     def _get_gate_set(
-        supported_ops: Set[str], device_type: _DeviceType, verbatim: bool
+        supported_ops: set[str], device_type: _DeviceType, verbatim: bool
     ) -> tuple[set[OpType], set[OpType]]:
         multiqs = set()
         singleqs = set()
@@ -480,7 +482,9 @@ class BraketBackend(Backend):
                 # gate set, and use X as the bit-flip gate in contextual optimization. We
                 # could do better than this, by defining different options depending on the
                 # supported gates. But it seems all existing backends support these gates.
-                raise NotImplementedError("Device must support cnot, rx, rz and x gates.")
+                raise NotImplementedError(
+                    "Device must support cnot, rx, rz and x gates."
+                )
             for t in supported_ops:
                 tkt = _gate_types[t]
                 if tkt is not None:
@@ -1008,7 +1012,9 @@ class BraketBackend(Backend):
                 if circuit_status.status is StatusEnum.ERROR:
                     raise RuntimeError(circuit_status.message)  # noqa: B904
                 time.sleep(wait)
-            raise RuntimeError(f"Timed out: no results after {timeout} seconds.")  # noqa: B904
+            raise RuntimeError(
+                f"Timed out: no results after {timeout} seconds."
+            )  # noqa: B904
 
     def _get_expectation_value(
         self,
