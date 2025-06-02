@@ -726,41 +726,32 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        else:
-            if (
-                self._characteristics["braketSchemaHeader"]["name"]
-                == IQM_SCHEMA["name"]
-            ):
-                raise ValueError(
-                    "The verbatim has not been supported for IQM devices yet."
-                )
-            elif (
-                self._characteristics["braketSchemaHeader"]["name"]
-                == RIGETTI_SCHEMA["name"]
-            ):
-                passes = [DecomposeBoxes(), FlattenRegisters()]
-                if optimisation_level == 0:
-                    passes.append(
-                        self.rebase_pass()
-                    )  # to satisfy MaxTwoQubitGatesPredicate
-                if optimisation_level == 1:
-                    passes.append(SynthesiseTket())
-                elif optimisation_level == 2:  # noqa: PLR2004
-                    passes.append(FullPeepholeOptimise())
-                passes.append(DefaultMappingPass(self._arch))
-                if optimisation_level == 2:  # noqa: PLR2004
-                    passes.append(KAKDecomposition(allow_swaps=False))
-                    passes.append(CliffordSimp(allow_swaps=False))
-                    passes.append(SynthesiseTket())
-                passes.append(self.rebase_pass())
-                passes.append(RemoveRedundancies())
-            elif (
-                self._characteristics["braketSchemaHeader"]["name"]
-                == IonQ_SCHEMA["name"]
-            ):
-                raise ValueError(
-                    "The verbatim has not been supported for IonQ devices yet."
-                )
+        elif self._characteristics["braketSchemaHeader"]["name"] == IQM_SCHEMA["name"]:
+            raise ValueError("The verbatim has not been supported for IQM devices yet.")
+        elif (
+            self._characteristics["braketSchemaHeader"]["name"]
+            == RIGETTI_SCHEMA["name"]
+        ):
+            passes = [DecomposeBoxes(), FlattenRegisters()]
+            if optimisation_level == 0:
+                passes.append(
+                    self.rebase_pass()
+                )  # to satisfy MaxTwoQubitGatesPredicate
+            if optimisation_level == 1:
+                passes.append(SynthesiseTket())
+            elif optimisation_level == 2:  # noqa: PLR2004
+                passes.append(FullPeepholeOptimise())
+            passes.append(DefaultMappingPass(self._arch))
+            if optimisation_level == 2:  # noqa: PLR2004
+                passes.append(KAKDecomposition(allow_swaps=False))
+                passes.append(CliffordSimp(allow_swaps=False))
+                passes.append(SynthesiseTket())
+            passes.append(self.rebase_pass())
+            passes.append(RemoveRedundancies())
+        elif self._characteristics["braketSchemaHeader"]["name"] == IonQ_SCHEMA["name"]:
+            raise ValueError(
+                "The verbatim has not been supported for IonQ devices yet."
+            )
         return SequencePass(passes)
 
     @property
