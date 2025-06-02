@@ -65,6 +65,9 @@ from pytket.passes import (
     SequencePass,
     SimplifyInitial,
     SynthesiseTket,
+    FlattenRegisters,
+    DefaultMappingPass,
+    KAKDecomposition,
 )
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.placement import NoiseAwarePlacement
@@ -418,12 +421,12 @@ class BraketBackend(Backend):
             supported_ops, self._device_type, self._verbatim
         )
 
-        self.arch, self._all_qubits = self._get_arch_info(props, self._device_type)
+        self._arch, self._all_qubits = self._get_arch_info(props, self._device_type)
         self._characteristics: dict | None = None
         if self._device_type == _DeviceType.QPU:
             self._characteristics = props["provider"]
         self._backend_info = self._get_backend_info(
-            self.arch,
+            self._arch,
             device,
             self._singleqs,
             self._multiqs,
@@ -455,9 +458,9 @@ class BraketBackend(Backend):
         ]
 
         if self._device_type == _DeviceType.QPU and not isinstance(
-            self.arch, FullyConnected
+            self._arch, FullyConnected
         ):
-            self._req_preds.append(ConnectivityPredicate(self.arch))
+            self._req_preds.append(ConnectivityPredicate(self._arch))
 
         self._rebase_pass = AutoRebase(self._multiqs | self._singleqs)
         self._squash_pass = AutoSquash(self._singleqs)
@@ -684,44 +687,80 @@ class BraketBackend(Backend):
 
     def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
-        passes = [DecomposeBoxes()]
-        if optimisation_level == 1:
-            passes.append(SynthesiseTket())
-        elif optimisation_level == 2:  # noqa: PLR2004
-            passes.append(FullPeepholeOptimise())
-        passes.append(self.rebase_pass())
-        if (
-            (self._device_type == _DeviceType.QPU)
-            and (self.characterisation is not None)
-            and (not self._requires_all_qubits_measured)
-        ):
-            arch = self.backend_info.architecture
-            assert isinstance(arch, Architecture)
-            passes.append(
-                CXMappingPass(
-                    arch,
-                    NoiseAwarePlacement(
+        if not self._verbatim:
+            passes = [DecomposeBoxes()]
+            if optimisation_level == 1:
+                passes.append(SynthesiseTket())
+            elif optimisation_level == 2:  # noqa: PLR2004
+                passes.append(FullPeepholeOptimise())
+            passes.append(self.rebase_pass())
+            if (
+                (self._device_type == _DeviceType.QPU)
+                and (self.characterisation is not None)
+                and (not self._requires_all_qubits_measured)
+            ):
+                arch = self.backend_info.architecture
+                assert isinstance(arch, Architecture)
+                passes.append(
+                    CXMappingPass(
                         arch,
-                        **get_avg_characterisation(self.characterisation),  # type: ignore
-                    ),
-                    directed_cx=False,
-                    delay_measures=True,
+                        NoiseAwarePlacement(
+                            arch,
+                            **get_avg_characterisation(self.characterisation),  # type: ignore
+                        ),
+                        directed_cx=False,
+                        delay_measures=True,
+                    )
                 )
-            )
-            passes.append(NaivePlacementPass(arch))
-            # If CX weren't supported by the device then we'd need to do another
-            # rebase_pass here. But we checked above that it is.
-        if optimisation_level == 1:
-            passes.extend([RemoveRedundancies(), self._squash_pass])
-        if optimisation_level == 2:  # noqa: PLR2004
-            passes.extend(
-                [
-                    CliffordSimp(False),
-                    SynthesiseTket(),
-                    self.rebase_pass(),
-                    self._squash_pass,
-                ]
-            )
+                passes.append(NaivePlacementPass(arch))
+                # If CX weren't supported by the device then we'd need to do another
+                # rebase_pass here. But we checked above that it is.
+            if optimisation_level == 1:
+                passes.extend([RemoveRedundancies(), self._squash_pass])
+            if optimisation_level == 2:  # noqa: PLR2004
+                passes.extend(
+                    [
+                        CliffordSimp(False),
+                        SynthesiseTket(),
+                        self.rebase_pass(),
+                        self._squash_pass,
+                    ]
+                )
+        elif self._verbatim == True:
+            if (
+                self._characteristics["braketSchemaHeader"]["name"]
+                == IQM_SCHEMA["name"]
+            ):
+                raise ValueError(
+                    f"The verbatim has not been supported for IQM devices yet."
+                )
+            elif (
+                self._characteristics["braketSchemaHeader"]["name"]
+                == RIGETTI_SCHEMA["name"]
+            ):
+                passes = [DecomposeBoxes(), FlattenRegisters()]
+                if optimisation_level == 0:
+                    passes.append(
+                        self.rebase_pass()
+                    )  # to satisfy MaxTwoQubitGatesPredicate
+                if optimisation_level == 1:
+                    passes.append(SynthesiseTket())
+                elif optimisation_level == 2:  # noqa: PLR2004
+                    passes.append(FullPeepholeOptimise())
+                passes.append(DefaultMappingPass(self._arch))
+                if optimisation_level == 2:  # noqa: PLR2004
+                    passes.append(KAKDecomposition(allow_swaps=False))
+                    passes.append(CliffordSimp(allow_swaps=False))
+                    passes.append(SynthesiseTket())
+                passes.append(self.rebase_pass())
+                passes.append(RemoveRedundancies())
+            elif (
+                self._characteristics["braketSchemaHeader"]["name"]
+                == IonQ_SCHEMA["name"]
+            ):
+                raise ValueError(
+                    f"The verbatim has not been supported for IonQ devices yet."
+                )
         return SequencePass(passes)
 
     @property
@@ -739,7 +778,7 @@ class BraketBackend(Backend):
     ) -> AwsQuantumTask | LocalQuantumTask:
         if self._device_type == _DeviceType.LOCAL:
             return self._device.run(bkcirc, shots=n_shots, **kwargs)
-        not self._verbatim:
+        elif not self._verbatim:
             return self._device.run(
                 bkcirc,
                 self._s3_dest,
@@ -747,14 +786,15 @@ class BraketBackend(Backend):
                 disable_qubit_rewiring=self._supports_client_qubit_mapping,
                 **kwargs,
             )
-        bkcirc_verbatim = braket.circuits.Circuit().add_verbatim_box(bkcirc)
-        return self._device.run(
-            bkcirc_verbatim,
-            self._s3_dest,
-            shots=n_shots,
-            disable_qubit_rewiring=True,
-            **kwargs,
-        )
+        elif self._verbatim:
+            bkcirc_verbatim = braket.circuits.Circuit().add_verbatim_box(bkcirc)
+            return self._device.run(
+                bkcirc_verbatim,
+                self._s3_dest,
+                shots=n_shots,
+                disable_qubit_rewiring=True,
+                **kwargs,
+            )
 
     def _to_bkcirc(
         self, circuit: Circuit
