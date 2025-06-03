@@ -435,9 +435,7 @@ class BraketBackend(Backend):
 
         n_qubits = len(self._all_qubits)
 
-        self._supports_client_qubit_mapping = (
-            self._device_type == _DeviceType.QPU
-        ) and (props["provider"]["braketSchemaHeader"] == RIGETTI_SCHEMA)
+        self._supports_client_qubit_mapping = self._device_type == _DeviceType.QPU
 
         self._requires_all_qubits_measured = False
         try:
@@ -726,10 +724,7 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        elif (
-            self._characteristics["braketSchemaHeader"]["name"]
-            == RIGETTI_SCHEMA["name"]
-        ):
+        elif self._verbatim:
             passes = [DecomposeBoxes(), FlattenRegisters()]
             if optimisation_level == 0:
                 passes.append(
@@ -739,7 +734,8 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             elif optimisation_level == 2:  # noqa: PLR2004
                 passes.append(FullPeepholeOptimise())
-            passes.append(DefaultMappingPass(self._arch))
+            if self._arch.__class__ == Architecture:
+                passes.append(DefaultMappingPass(self._arch))
             if optimisation_level == 2:  # noqa: PLR2004
                 passes.append(KAKDecomposition(allow_swaps=False))
                 passes.append(CliffordSimp(allow_swaps=False))
