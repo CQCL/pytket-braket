@@ -954,7 +954,7 @@ class BraketBackend(Backend):
         """
         region: str | None = kwargs.get("region")
         aws_session: AwsSession | None = kwargs.get("aws_session")
-        verbatim: bool = cast(bool, kwargs.get("verbatim"))
+        verbatim: bool = cast("bool", kwargs.get("verbatim"))
         if aws_session is None:
             if region is not None:
                 session = AwsSession(boto_session=boto3.Session(region_name=region))
