@@ -514,20 +514,7 @@ class BraketBackend(Backend):
                 schema = device_properties["provider"]["braketSchemaHeader"]
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
-                if schema == IQM_SCHEMA:
-                    connectivity_graph = dict(  # noqa: C402
-                        (int(k) - 1, [int(v) - 1 for v in l])
-                        for k, l in connectivity_graph.items()
-                    )
-                    # each connectivity graph key will be an int
-                    # connectivity_graph values will be lists
-                    all_qubits_set = set()
-                    for k, v in connectivity_graph.items():
-                        all_qubits_set.add(k - 1)
-                        for l in v:
-                            all_qubits_set.add(l - 1)
-                    all_qubits = list(all_qubits_set)
-                elif schema == RIGETTI_SCHEMA:
+                if schema in (IQM_SCHEMA, RIGETTI_SCHEMA):
                     connectivity_graph = dict(  # noqa: C402
                         (int(k), [int(v) for v in l])
                         for k, l in connectivity_graph.items()
@@ -604,14 +591,14 @@ class BraketBackend(Backend):
                 properties = characteristics["properties"]
                 props1q = {}
                 for key in properties["one_qubit"].keys():  # noqa: SIM118
-                    node1q = str(int(key) - 1)
+                    node1q = str(int(key))
                     props1q[node1q] = properties["one_qubit"][key]
                 props2q = {}
                 for key in properties["two_qubit"].keys():  # noqa: SIM118
                     ind = key.index("-")
                     node2q1, node2q2 = (
-                        str(int(key[:ind]) - 1),
-                        str(int(key[ind + 1 :]) - 1),
+                        str(int(key[:ind])),
+                        str(int(key[ind + 1 :])),
                     )
                     props2q[node2q1 + "-" + node2q2] = properties["two_qubit"][key]
                 get_node_error = lambda n: 1.0 - cast(
@@ -734,7 +721,7 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             elif optimisation_level == 2:  # noqa: PLR2004
                 passes.append(FullPeepholeOptimise())
-            if isinstance(self._arch, Architecture):
+            if self._arch.__class__ == Architecture:
                 passes.append(DefaultMappingPass(self._arch))
             if optimisation_level == 2:  # noqa: PLR2004
                 passes.append(KAKDecomposition(allow_swaps=False))
@@ -954,7 +941,7 @@ class BraketBackend(Backend):
         """
         region: str | None = kwargs.get("region")
         aws_session: AwsSession | None = kwargs.get("aws_session")
-        verbatim: bool = cast("bool", kwargs.get("verbatim"))
+        verbatim: bool = kwargs.get("verbatim")
         if aws_session is None:
             if region is not None:
                 session = AwsSession(boto_session=boto3.Session(region_name=region))
@@ -1093,7 +1080,7 @@ class BraketBackend(Backend):
         res = task.result()
         return res.get_value_by_result_type(restype)  # type: ignore
 
-    def get_pauli_expectation_value(
+    def get_pauli_expectation_value(  # type: ignore
         self,
         state_circuit: Circuit,
         pauli: QubitPauliString,
@@ -1122,7 +1109,7 @@ class BraketBackend(Backend):
         observable, qbs = _obs_from_qps(state_circuit, pauli)
         return self._get_expectation_value(bkcirc, observable, qbs, n_shots, **kwargs)
 
-    def get_operator_expectation_value(
+    def get_operator_expectation_value(  # type: ignore
         self,
         state_circuit: Circuit,
         operator: QubitPauliOperator,
