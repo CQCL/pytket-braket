@@ -721,7 +721,7 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             elif optimisation_level == 2:  # noqa: PLR2004
                 passes.append(FullPeepholeOptimise())
-            if self._arch.__class__ == Architecture:
+            if isinstance(self._arch, Architecture):
                 passes.append(DefaultMappingPass(self._arch))
             if optimisation_level == 2:  # noqa: PLR2004
                 passes.append(KAKDecomposition(allow_swaps=False))
@@ -941,7 +941,7 @@ class BraketBackend(Backend):
         """
         region: str | None = kwargs.get("region")
         aws_session: AwsSession | None = kwargs.get("aws_session")
-        verbatim: bool = kwargs.get("verbatim")
+        verbatim: bool = cast("bool", kwargs.get("verbatim"))
         if aws_session is None:
             if region is not None:
                 session = AwsSession(boto_session=boto3.Session(region_name=region))
@@ -1080,7 +1080,7 @@ class BraketBackend(Backend):
         res = task.result()
         return res.get_value_by_result_type(restype)  # type: ignore
 
-    def get_pauli_expectation_value(  # type: ignore
+    def get_pauli_expectation_value(
         self,
         state_circuit: Circuit,
         pauli: QubitPauliString,
@@ -1109,7 +1109,7 @@ class BraketBackend(Backend):
         observable, qbs = _obs_from_qps(state_circuit, pauli)
         return self._get_expectation_value(bkcirc, observable, qbs, n_shots, **kwargs)
 
-    def get_operator_expectation_value(  # type: ignore
+    def get_operator_expectation_value(
         self,
         state_circuit: Circuit,
         operator: QubitPauliOperator,
