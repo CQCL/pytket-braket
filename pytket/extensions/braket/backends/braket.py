@@ -365,7 +365,9 @@ class BraketBackend(Backend):
             else:
                 raise ValueError(f"Unsupported device type {aws_device_type}")
         if self._verbatim and not aws_device_type == _DeviceType.QPU:
-            raise ValueError(f"The verbatim is not supported for {aws_device_type}")
+            raise ValueError(
+                f"The `verbatim` argument is not supported for {aws_device_type}"
+            )
         props = self._device.properties.dict()
         action = props["action"]
         device_info = action.get(DeviceActionType.JAQCD)
@@ -713,7 +715,7 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        elif self._verbatim:
+        else:
             passes = [DecomposeBoxes(), FlattenRegisters()]
             if optimisation_level == 0:
                 passes.append(
