@@ -300,7 +300,9 @@ class BraketBackend(Backend):
         :param aws_session: braket AwsSession object, to pass credentials in if not
             configured on local machine
         :param verbatim: use the feature "verbatim-compilation".
-            execute a job of circuit composed of the primitive gate set of QPU
+            If verbatim-compilation = True, you can execute your circuits composed of
+            the primitive gates supported by QPU without any modifications.
+            For more details, see https://docs.aws.amazon.com/braket/latest/developerguide/braket-constructing-circuit.html#verbatim-compilation
             default: False
         """
         super().__init__()
@@ -363,7 +365,7 @@ class BraketBackend(Backend):
             else:
                 raise ValueError(f"Unsupported device type {aws_device_type}")
         if self._verbatim and not aws_device_type == _DeviceType.QPU:
-            raise ValueError(f"The `verbatim` argument is not supported for {aws_device_type}")
+            raise ValueError(f"The verbatim is not supported for {aws_device_type}")
         props = self._device.properties.dict()
         action = props["action"]
         device_info = action.get(DeviceActionType.JAQCD)
@@ -506,6 +508,7 @@ class BraketBackend(Backend):
             else:
                 schema = device_properties["provider"]["braketSchemaHeader"]
                 connectivity_graph = connectivity["connectivityGraph"]
+                # Convert strings to ints
                 if schema in (IQM_SCHEMA, RIGETTI_SCHEMA):
                     connectivity_graph = dict(  # noqa: C402
                         (int(k), [int(v) for v in l])
@@ -703,7 +706,7 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        else:
+        elif self._verbatim:
             passes = [DecomposeBoxes(), FlattenRegisters()]
             if optimisation_level == 0:
                 passes.append(
