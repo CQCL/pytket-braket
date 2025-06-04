@@ -56,6 +56,7 @@ def test_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
     skip_if_device_is_not_available(b)
     assert b.supports_shots
+    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
     c = b.get_compiled_circuit(c)
@@ -93,6 +94,7 @@ def test_dm_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
     skip_if_device_is_not_available(b)
     assert b.supports_density_matrix
+    assert not b._verbatim
     c = Circuit(2).H(0).SWAP(0, 1)
     cc = b.get_compiled_circuit(c)
     h = b.process_circuit(cc)
@@ -113,6 +115,7 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
     skip_if_device_is_not_available(b)
     assert b.supports_shots
+    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
     c = b.get_compiled_circuit(c)
@@ -157,6 +160,12 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
             "provider": "ionq",
             "device": "Forte-1",
         },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Forte-Enterprise-1",
+        },
     ],
     indirect=True,
 )
@@ -166,6 +175,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
+    assert not b._verbatim
 
     # Device is fully connected
     arch = b.backend_info.architecture
@@ -205,6 +215,29 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
         h = b.process_circuit(c, 1)
         assert "non-contiguous qubits" in str(e.value)
 
+    # reset backend with `verbatim = True'
+    b_verbatim = BraketBackend(
+        device=b._device.name,
+        region=b._device.arn.split(":")[3],
+        s3_bucket=b._s3_dest[0],
+        s3_folder=b._s3_dest[1],
+        device_type=b._device.arn.split(":")[5].split("/")[1],
+        provider=b._device.arn.split(":")[5].split("/")[2],
+        aws_session=b._device.aws_session,
+        verbatim=True,
+    )
+    assert b._verbatim
+    assert not b.valid_circuit(c)
+    c0 = b.get_compiled_circuit(c, opt_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, opt_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, opt_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
+    _ = b.circuit_status(h)
+    b.cancel(h)
+
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
 @pytest.mark.parametrize(
@@ -225,6 +258,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
+    assert not b._verbatim
 
     chars = b.characterisation
     assert chars is not None
@@ -248,6 +282,29 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     c = Circuit(11).H(9).CX(9, 10)
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c, 10)
+    b.cancel(h)
+
+    # reset backend with `verbatim = True'
+    b_verbatim = BraketBackend(
+        device=b._device.name,
+        region=b._device.arn.split(":")[3],
+        s3_bucket=b._s3_dest[0],
+        s3_folder=b._s3_dest[1],
+        device_type=b._device.arn.split(":")[5].split("/")[1],
+        provider=b._device.arn.split(":")[5].split("/")[2],
+        aws_session=b._device.aws_session,
+        verbatim=True,
+    )
+    assert b._verbatim
+    assert not b.valid_circuit(c)
+    c0 = b.get_compiled_circuit(c, opt_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, opt_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, opt_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
+    _ = b.circuit_status(h)
     b.cancel(h)
 
 
@@ -293,6 +350,7 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
+    assert not b._verbatim
 
     chars = b.characterisation
     assert chars is not None
@@ -318,11 +376,35 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
     h = b.process_circuit(c, 10)
     b.cancel(h)
 
+    # reset backend with `verbatim = True'
+    b_verbatim = BraketBackend(
+        device=b._device.name,
+        region=b._device.arn.split(":")[3],
+        s3_bucket=b._s3_dest[0],
+        s3_folder=b._s3_dest[1],
+        device_type=b._device.arn.split(":")[5].split("/")[1],
+        provider=b._device.arn.split(":")[5].split("/")[2],
+        aws_session=b._device.aws_session,
+        verbatim=True,
+    )
+    assert b._verbatim
+    assert not b.valid_circuit(c)
+    c0 = b.get_compiled_circuit(c, opt_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, opt_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, opt_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
+    _ = b.circuit_status(h)
+    b.cancel(h)
+
 
 def test_local_simulator() -> None:
     b = BraketBackend(local=True)
     assert b.supports_shots
     assert b.supports_counts
+    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
     c = b.get_compiled_circuit(c)
@@ -362,6 +444,7 @@ def test_local_dm_simulator() -> None:
     assert b.supports_shots
     assert b.supports_counts
     assert b.supports_density_matrix
+    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c)
