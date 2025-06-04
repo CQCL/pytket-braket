@@ -226,17 +226,17 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
         aws_session=b._device.aws_session,
         verbatim=True,
     )
-    assert b._verbatim
-    assert not b.valid_circuit(c)
-    c0 = b.get_compiled_circuit(c, opt_level=0)
-    assert b.valid_circuit(c0)
-    c1 = b.get_compiled_circuit(c, opt_level=1)
-    assert b.valid_circuit(c1)
-    c2 = b.get_compiled_circuit(c, opt_level=2)
-    assert b.valid_circuit(c2)
-    h = b.process_circuit(c0, 10)
-    _ = b.circuit_status(h)
-    b.cancel(h)
+    assert b_verbatim._verbatim
+    assert not b_verbatim.valid_circuit(c)
+    c0 = b_verbatim.get_compiled_circuit(c, opt_level=0)
+    assert b_verbatim.valid_circuit(c0)
+    c1 = b_verbatim.get_compiled_circuit(c, opt_level=1)
+    assert b_verbatim.valid_circuit(c1)
+    c2 = b_verbatim.get_compiled_circuit(c, opt_level=2)
+    assert b_verbatim.valid_circuit(c2)
+    h = b_verbatim.process_circuit(c0, 10)
+    _ = b_verbatim.circuit_status(h)
+    b_verbatim.cancel(h)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -295,17 +295,17 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
         aws_session=b._device.aws_session,
         verbatim=True,
     )
-    assert b._verbatim
-    assert not b.valid_circuit(c)
-    c0 = b.get_compiled_circuit(c, opt_level=0)
-    assert b.valid_circuit(c0)
-    c1 = b.get_compiled_circuit(c, opt_level=1)
-    assert b.valid_circuit(c1)
-    c2 = b.get_compiled_circuit(c, opt_level=2)
-    assert b.valid_circuit(c2)
-    h = b.process_circuit(c0, 10)
-    _ = b.circuit_status(h)
-    b.cancel(h)
+    assert b_verbatim._verbatim
+    assert not b_verbatim.valid_circuit(c)
+    c0 = b_verbatim.get_compiled_circuit(c, opt_level=0)
+    assert b_verbatim.valid_circuit(c0)
+    c1 = b_verbatim.get_compiled_circuit(c, opt_level=1)
+    assert b_verbatim.valid_circuit(c1)
+    c2 = b_verbatim.get_compiled_circuit(c, opt_level=2)
+    assert b_verbatim.valid_circuit(c2)
+    h = b_verbatim.process_circuit(c0, 10)
+    _ = b_verbatim.circuit_status(h)
+    b_verbatim.cancel(h)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -387,17 +387,17 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
         aws_session=b._device.aws_session,
         verbatim=True,
     )
-    assert b._verbatim
-    assert not b.valid_circuit(c)
-    c0 = b.get_compiled_circuit(c, opt_level=0)
-    assert b.valid_circuit(c0)
-    c1 = b.get_compiled_circuit(c, opt_level=1)
-    assert b.valid_circuit(c1)
-    c2 = b.get_compiled_circuit(c, opt_level=2)
-    assert b.valid_circuit(c2)
-    h = b.process_circuit(c0, 10)
-    _ = b.circuit_status(h)
-    b.cancel(h)
+    assert b_verbatim._verbatim
+    assert not b_verbatim.valid_circuit(c)
+    c0 = b_verbatim.get_compiled_circuit(c, opt_level=0)
+    assert b_verbatim.valid_circuit(c0)
+    c1 = b_verbatim.get_compiled_circuit(c, opt_level=1)
+    assert b_verbatim.valid_circuit(c1)
+    c2 = b_verbatim.get_compiled_circuit(c, opt_level=2)
+    assert b_verbatim.valid_circuit(c2)
+    h = b_verbatim.process_circuit(c0, 10)
+    _ = b_verbatim.circuit_status(h)
+    b_verbatim.cancel(h)
 
 
 def test_local_simulator() -> None:
