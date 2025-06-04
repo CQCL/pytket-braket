@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 def normalize_angle(n: float) -> float:
     n0 = n % 4
-    if n0 > 2:
+    if n0 > 2:  # noqa: PLR2004
         n0 = n0 - 4
     return n0
 
