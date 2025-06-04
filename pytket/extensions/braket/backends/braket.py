@@ -375,7 +375,14 @@ class BraketBackend(Backend):
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
 
-        supported_ops = set(op.lower() for op in (props["paradigm"]["nativeGateSet"] if self._verbatim else device_info["supportedOperations"]))  # noqa: C401
+        supported_ops = set(  # noqa: C401
+            op.lower()
+            for op in (
+                props["paradigm"]["nativeGateSet"]
+                if self._verbatim
+                else device_info["supportedOperations"]
+            )
+        )
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
