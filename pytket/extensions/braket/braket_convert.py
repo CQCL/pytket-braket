@@ -30,13 +30,11 @@ from pytket.circuit import Circuit, OpType, Qubit
 if TYPE_CHECKING:
     from pytket.circuit import Node
 
-ANGEL_UPBOUND = 2
-
 
 def normalize_angle(n: float) -> float:
     n0 = n % 4
-    if n0 > ANGEL_UPBOUND:
-        n0 = n0 % -4
+    if n0 > 2:
+        n0 = n0 - 4
     return n0
 
 
@@ -151,7 +149,7 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
         elif optype == OpType.GPI2:
             bkcirc.gpi2(*qbs, params[0] * pi)
         elif optype == OpType.AAMS:
-            bkcirc.ms(*qbs, params[2] * pi, params[0] * pi, params[1] * pi)
+            bkcirc.ms(*qbs, params[1] * pi, params[2] * pi, params[0] * pi)
         # PhasedX is a gate in the gate set of IQM's Garnet.
         # It seems that the verbatim execution accepts an angle in (2*pi, -2*pi).
         elif optype == OpType.PhasedX:
