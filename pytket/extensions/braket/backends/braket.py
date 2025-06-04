@@ -363,7 +363,7 @@ class BraketBackend(Backend):
             else:
                 raise ValueError(f"Unsupported device type {aws_device_type}")
         if self._verbatim and not aws_device_type == _DeviceType.QPU:
-            raise ValueError(f"The verbatim is not supported for {aws_device_type}")
+            raise ValueError(f"The `verbatim` argument is not supported for {aws_device_type}")
         props = self._device.properties.dict()
         action = props["action"]
         device_info = action.get(DeviceActionType.JAQCD)
@@ -373,14 +373,7 @@ class BraketBackend(Backend):
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
 
-        if self._verbatim:
-            supported_ops = set(  # noqa: C401
-                op.lower() for op in props["paradigm"]["nativeGateSet"]
-            )
-        else:
-            supported_ops = set(  # noqa: C401
-                op.lower() for op in device_info["supportedOperations"]
-            )
+        supported_ops = set(op.lower() for op in (props["paradigm"]["nativeGateSet"] if self._verbatim else device_info["supportedOperations"]))  # noqa: C401
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
@@ -513,7 +506,6 @@ class BraketBackend(Backend):
             else:
                 schema = device_properties["provider"]["braketSchemaHeader"]
                 connectivity_graph = connectivity["connectivityGraph"]
-                # Convert strings to ints
                 if schema in (IQM_SCHEMA, RIGETTI_SCHEMA):
                     connectivity_graph = dict(  # noqa: C402
                         (int(k), [int(v) for v in l])
@@ -711,7 +703,7 @@ class BraketBackend(Backend):
                         self._squash_pass,
                     ]
                 )
-        elif self._verbatim:
+        else:
             passes = [DecomposeBoxes(), FlattenRegisters()]
             if optimisation_level == 0:
                 passes.append(
