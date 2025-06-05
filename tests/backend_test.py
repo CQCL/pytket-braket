@@ -56,7 +56,6 @@ def test_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
     skip_if_device_is_not_available(b)
     assert b.supports_shots
-    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
     c = b.get_compiled_circuit(c)
@@ -94,7 +93,6 @@ def test_dm_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
     skip_if_device_is_not_available(b)
     assert b.supports_density_matrix
-    assert not b._verbatim
     c = Circuit(2).H(0).SWAP(0, 1)
     cc = b.get_compiled_circuit(c)
     h = b.process_circuit(cc)
@@ -115,7 +113,6 @@ def test_tn1_simulator(authenticated_braket_backend: BraketBackend) -> None:
     b = authenticated_braket_backend
     skip_if_device_is_not_available(b)
     assert b.supports_shots
-    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
     c = b.get_compiled_circuit(c)
@@ -175,7 +172,9 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
-    assert not b._verbatim
+    assert not b._verbatim  # noqa: SLF001
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job.
+    assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     # Device is fully connected
     arch = b.backend_info.architecture
@@ -202,9 +201,13 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
         .add_gate(OpType.CCX, [0, 1, 2])
     )
     assert not b.valid_circuit(c)
-    c = b.get_compiled_circuit(c)
-    assert b.valid_circuit(c)
-    h = b.process_circuit(c, 1)
+    c0 = b.get_compiled_circuit(c, optimisation_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, optimisation_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, optimisation_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -215,28 +218,93 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
         h = b.process_circuit(c, 1)
         assert "non-contiguous qubits" in str(e.value)
 
-    # reset backend with `verbatim = True'
-    b_verbatim = BraketBackend(
-        device=b._device.name,
-        region=b._device.arn.split(":")[3],
-        s3_bucket=b._s3_dest[0],
-        s3_folder=b._s3_dest[1],
-        device_type=b._device.arn.split(":")[5].split("/")[1],
-        provider=b._device.arn.split(":")[5].split("/")[2],
-        aws_session=b._device.aws_session,
-        verbatim=True,
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize(
+    "authenticated_braket_backend",
+    [
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-1",
+            "verbatim": True,
+        },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Aria-2",
+            "verbatim": True,
+        },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Forte-1",
+            "verbatim": True,
+        },
+        {
+            "device_type": "qpu",
+            "region": "us-east-1",
+            "provider": "ionq",
+            "device": "Forte-Enterprise-1",
+            "verbatim": True,
+        },
+    ],
+    indirect=True,
+)
+def test_ionq_verbatim(authenticated_braket_backend: BraketBackend) -> None:
+    b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
+    assert b.persistent_handles
+    assert b.supports_shots
+    assert not b.supports_state
+    assert b._verbatim  # noqa: SLF001
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job. Verbatim execution requires that b._supports_client_qubit_mapping is set to True.
+    assert b._supports_client_qubit_mapping  # noqa: SLF001
+
+    # Device is fully connected
+    arch = b.backend_info.architecture
+    assert isinstance(arch, FullyConnected)
+
+    chars = b.characterisation
+    assert chars is not None
+    assert chars is not None
+    assert all(s in chars for s in ["NodeErrors", "EdgeErrors", "ReadoutErrors"])
+    assert b._characteristics is not None  # noqa: SLF001
+    fid = b._characteristics["fidelity"]  # noqa: SLF001
+    assert "1Q" in fid
+    assert "2Q" in fid
+    assert "spam" in fid
+    tim = b._characteristics["timing"]  # noqa: SLF001
+    assert "T1" in tim
+    assert "T2" in tim
+
+    c = (
+        Circuit(3)
+        .add_gate(OpType.XXPhase, 0.5, [0, 1])
+        .add_gate(OpType.YYPhase, 0.5, [1, 2])
+        .add_gate(OpType.SWAP, [0, 2])
+        .add_gate(OpType.CCX, [0, 1, 2])
     )
-    assert b_verbatim._verbatim
-    assert not b_verbatim.valid_circuit(c)
-    c0 = b_verbatim.get_compiled_circuit(c, optimisation_level=0)
-    assert b_verbatim.valid_circuit(c0)
-    c1 = b_verbatim.get_compiled_circuit(c, optimisation_level=1)
-    assert b_verbatim.valid_circuit(c1)
-    c2 = b_verbatim.get_compiled_circuit(c, optimisation_level=2)
-    assert b_verbatim.valid_circuit(c2)
-    h = b_verbatim.process_circuit(c0, 10)
-    _ = b_verbatim.circuit_status(h)
-    b_verbatim.cancel(h)
+    assert not b.valid_circuit(c)
+    c0 = b.get_compiled_circuit(c, optimisation_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, optimisation_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, optimisation_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
+    _ = b.circuit_status(h)
+    b.cancel(h)
+
+    # Circuit with unused qubits
+    c = Circuit(11).H(9).CX(9, 10)
+    c = b.get_compiled_circuit(c)
+    with pytest.raises(Exception) as e:
+        h = b.process_circuit(c, 1)
+        assert "non-contiguous qubits" in str(e.value)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -258,7 +326,9 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
-    assert not b._verbatim
+    assert not b._verbatim  # noqa: SLF001
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job.
+    assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     chars = b.characterisation
     assert chars is not None
@@ -272,9 +342,13 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
         .add_gate(OpType.XXPhase, 0.5, [1, 2])
     )
     assert not b.valid_circuit(c)
-    c = b.get_compiled_circuit(c)
-    assert b.valid_circuit(c)
-    h = b.process_circuit(c, 10)  # min shots = 10 for Rigetti
+    c0 = b.get_compiled_circuit(c, optimisation_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, optimisation_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, optimisation_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)  # min shots = 10 for Rigetti
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -284,28 +358,58 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     h = b.process_circuit(c, 10)
     b.cancel(h)
 
-    # reset backend with `verbatim = True'
-    b_verbatim = BraketBackend(
-        device=b._device.name,
-        region=b._device.arn.split(":")[3],
-        s3_bucket=b._s3_dest[0],
-        s3_folder=b._s3_dest[1],
-        device_type=b._device.arn.split(":")[5].split("/")[1],
-        provider=b._device.arn.split(":")[5].split("/")[2],
-        aws_session=b._device.aws_session,
-        verbatim=True,
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize(
+    "authenticated_braket_backend",
+    [
+        {
+            "device_type": "qpu",
+            "provider": "rigetti",
+            "device": "Ankaa-3",
+            "region": "us-west-1",
+            "verbatim": True,
+        }
+    ],
+    indirect=True,
+)
+def test_rigetti_verbatim(authenticated_braket_backend: BraketBackend) -> None:
+    b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
+    assert b.persistent_handles
+    assert b.supports_shots
+    assert not b.supports_state
+    assert b._verbatim  # noqa: SLF001
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job. Verbatim execution requires that b._supports_client_qubit_mapping is set to True.
+    assert b._supports_client_qubit_mapping  # noqa: SLF001
+
+    chars = b.characterisation
+    assert chars is not None
+    assert all(s in chars for s in ["NodeErrors", "EdgeErrors", "ReadoutErrors"])
+
+    c = (
+        Circuit(3)
+        .add_gate(OpType.CCX, [0, 1, 2])
+        .add_gate(OpType.U1, 0.5, [1])
+        .add_gate(OpType.ISWAP, 0.5, [0, 2])
+        .add_gate(OpType.XXPhase, 0.5, [1, 2])
     )
-    assert b_verbatim._verbatim
-    assert not b_verbatim.valid_circuit(c)
-    c0 = b_verbatim.get_compiled_circuit(c, optimisation_level=0)
-    assert b_verbatim.valid_circuit(c0)
-    c1 = b_verbatim.get_compiled_circuit(c, optimisation_level=1)
-    assert b_verbatim.valid_circuit(c1)
-    c2 = b_verbatim.get_compiled_circuit(c, optimisation_level=2)
-    assert b_verbatim.valid_circuit(c2)
-    h = b_verbatim.process_circuit(c0, 10)
-    _ = b_verbatim.circuit_status(h)
-    b_verbatim.cancel(h)
+    assert not b.valid_circuit(c)
+    c0 = b.get_compiled_circuit(c, optimisation_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, optimisation_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, optimisation_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
+    _ = b.circuit_status(h)
+    b.cancel(h)
+
+    # Circuit with unused qubits
+    c = Circuit(11).H(9).CX(9, 10)
+    c = b.get_compiled_circuit(c)
+    h = b.process_circuit(c, 10)
+    b.cancel(h)
 
 
 @pytest.mark.skipif(skip_remote_tests, reason=REASON)
@@ -350,7 +454,9 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
     assert b.persistent_handles
     assert b.supports_shots
     assert not b.supports_state
-    assert not b._verbatim
+    assert not b._verbatim  # noqa: SLF001
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job.
+    assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     chars = b.characterisation
     assert chars is not None
@@ -364,9 +470,13 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
         .add_gate(OpType.XXPhase, 0.5, [1, 2])
     )
     assert not b.valid_circuit(c)
-    c = b.get_compiled_circuit(c)
-    assert b.valid_circuit(c)
-    h = b.process_circuit(c, 10)
+    c0 = b.get_compiled_circuit(c, optimisation_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, optimisation_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, optimisation_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -376,35 +486,64 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
     h = b.process_circuit(c, 10)
     b.cancel(h)
 
-    # reset backend with `verbatim = True'
-    b_verbatim = BraketBackend(
-        device=b._device.name,
-        region=b._device.arn.split(":")[3],
-        s3_bucket=b._s3_dest[0],
-        s3_folder=b._s3_dest[1],
-        device_type=b._device.arn.split(":")[5].split("/")[1],
-        provider=b._device.arn.split(":")[5].split("/")[2],
-        aws_session=b._device.aws_session,
-        verbatim=True,
+
+@pytest.mark.skipif(skip_remote_tests, reason=REASON)
+@pytest.mark.parametrize(
+    "authenticated_braket_backend",
+    [
+        {
+            "device_type": "qpu",
+            "provider": "iqm",
+            "device": "Garnet",
+            "region": "eu-north-1",
+            "verbatim": True,
+        }
+    ],
+    indirect=True,
+)
+def test_iqm_verbatim(authenticated_braket_backend: BraketBackend) -> None:
+    b = authenticated_braket_backend
+    skip_if_device_is_not_available(b)
+    assert b.persistent_handles
+    assert b.supports_shots
+    assert not b.supports_state
+    assert b._verbatim  # noqa: SLF001
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job. Verbatim execution requires that b._supports_client_qubit_mapping is set to True.
+    assert b._supports_client_qubit_mapping  # noqa: SLF001
+
+    chars = b.characterisation
+    assert chars is not None
+    assert all(s in chars for s in ["NodeErrors", "EdgeErrors", "ReadoutErrors"])
+
+    c = (
+        Circuit(3)
+        .add_gate(OpType.CCX, [0, 1, 2])
+        .add_gate(OpType.U1, 0.5, [1])
+        .add_gate(OpType.ISWAP, 0.5, [0, 2])
+        .add_gate(OpType.XXPhase, 0.5, [1, 2])
     )
-    assert b_verbatim._verbatim
-    assert not b_verbatim.valid_circuit(c)
-    c0 = b_verbatim.get_compiled_circuit(c, optimisation_level=0)
-    assert b_verbatim.valid_circuit(c0)
-    c1 = b_verbatim.get_compiled_circuit(c, optimisation_level=1)
-    assert b_verbatim.valid_circuit(c1)
-    c2 = b_verbatim.get_compiled_circuit(c, optimisation_level=2)
-    assert b_verbatim.valid_circuit(c2)
-    h = b_verbatim.process_circuit(c0, 10)
-    _ = b_verbatim.circuit_status(h)
-    b_verbatim.cancel(h)
+    assert not b.valid_circuit(c)
+    c0 = b.get_compiled_circuit(c, optimisation_level=0)
+    assert b.valid_circuit(c0)
+    c1 = b.get_compiled_circuit(c, optimisation_level=1)
+    assert b.valid_circuit(c1)
+    c2 = b.get_compiled_circuit(c, optimisation_level=2)
+    assert b.valid_circuit(c2)
+    h = b.process_circuit(c0, 10)
+    _ = b.circuit_status(h)
+    b.cancel(h)
+
+    # Circuit with unused qubits
+    c = Circuit(20).H(5).CX(5, 6)
+    c = b.get_compiled_circuit(c)
+    h = b.process_circuit(c, 10)
+    b.cancel(h)
 
 
 def test_local_simulator() -> None:
     b = BraketBackend(local=True)
     assert b.supports_shots
     assert b.supports_counts
-    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c.measure_all()
     c = b.get_compiled_circuit(c)
@@ -444,7 +583,6 @@ def test_local_dm_simulator() -> None:
     assert b.supports_shots
     assert b.supports_counts
     assert b.supports_density_matrix
-    assert not b._verbatim
     c = Circuit(2).H(0).CX(0, 1)
     c = b.get_compiled_circuit(c)
     h = b.process_circuit(c)
