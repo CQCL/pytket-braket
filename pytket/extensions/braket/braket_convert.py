@@ -38,7 +38,7 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
     force_ops_on_target_qubits: bool = False,
 ) -> tuple[BK_Circuit, list[int], dict[int, int]]:
     """
-    Convert a tket :py:class:`Circuit` to a braket circuit.
+    Convert a tket :py:class:`pytket._tket.circuit.Circuit` to a braket circuit.
 
     :param tkcirc: circuit to be converted
     :param mapped_qubits: if True, `tkcirc` must have a single one-dimensional qubit
@@ -143,7 +143,7 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
 
 def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:  # noqa: PLR0912, PLR0915
     """
-    Convert a braket circuit to a tket :py:class:`Circuit`
+    Convert a braket circuit to a tket :py:class:`pytket._tket.circuit.Circuit`
 
     :param bkcirc: circuit to be converted
 

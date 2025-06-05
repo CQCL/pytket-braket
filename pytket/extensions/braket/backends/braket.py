@@ -271,7 +271,7 @@ class BraketBackend(Backend):
         If `local=True`, other parameters are ignored.
 
         All parameters except `device` can be set in config using
-        :py:meth:`pytket.extensions.braket.set_braket_config`.
+        :py:meth:`pytket.extensions.braket.backends.config.set_braket_config`.
         For `device_type`, `provider` and `device` if no parameter
         is specified as a keyword argument or
         in the config file the defaults specified below are used.
@@ -743,9 +743,11 @@ class BraketBackend(Backend):
     ) -> list[ResultHandle]:
         """
         Supported `kwargs`:
-        - `postprocess`: apply end-of-circuit simplifications and classical
+
+        * `postprocess`: apply end-of-circuit simplifications and classical
           postprocessing to improve fidelity of results (bool, default False)
-        - `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
+          
+        * `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
           fidelity of results assuming all qubits initialized to zero (bool, default
           False)
         """
@@ -890,7 +892,7 @@ class BraketBackend(Backend):
     @classmethod
     def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
         """
-        See :py:meth:`pytket.backends.Backend.available_devices`.
+        See :py:meth:`pytket.backends.backend.Backend.available_devices`.
         Supported kwargs:
 
         - `region` (default None). The particular AWS region to search for
@@ -951,7 +953,7 @@ class BraketBackend(Backend):
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
         Supported kwargs: `timeout` (default none), `wait` (default 1s).
         """
         try:
