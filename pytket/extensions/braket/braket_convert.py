@@ -143,13 +143,18 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
         elif optype == OpType.Z:
             bkcirc.z(*qbs)
         elif optype == OpType.ZZPhase:
-            bkcirc.zz(*qbs, params[0] * pi)
+            bkcirc.zz(*qbs, normalize_angle(params[0]) * pi)
         elif optype == OpType.GPI:
-            bkcirc.gpi(*qbs, params[0] * pi)
+            bkcirc.gpi(*qbs, normalize_angle(params[0]) * pi)
         elif optype == OpType.GPI2:
-            bkcirc.gpi2(*qbs, params[0] * pi)
+            bkcirc.gpi2(*qbs, normalize_angle(params[0]) * pi)
         elif optype == OpType.AAMS:
-            bkcirc.ms(*qbs, params[1] * pi, params[2] * pi, params[0] * pi)
+            bkcirc.ms(
+                *qbs,
+                normalize_angle(params[1]) * pi,
+                normalize_angle(params[2]) * pi,
+                normalize_angle(params[0]) * pi,
+            )
         # PhasedX is a gate in the gate set of IQM's Garnet.
         # It seems that the verbatim execution accepts an angle in (2*pi, -2*pi).
         elif optype == OpType.PhasedX:
