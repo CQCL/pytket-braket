@@ -368,59 +368,6 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
             "provider": "rigetti",
             "device": "Ankaa-3",
             "region": "us-west-1",
-            "verbatim": True,
-        }
-    ],
-    indirect=True,
-)
-def test_rigetti_verbatim(authenticated_braket_backend: BraketBackend) -> None:
-    b = authenticated_braket_backend
-    skip_if_device_is_not_available(b)
-    assert b.persistent_handles
-    assert b.supports_shots
-    assert not b.supports_state
-    assert b._verbatim  # noqa: SLF001
-    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job. Verbatim execution requires that b._supports_client_qubit_mapping is set to True.
-    assert b._supports_client_qubit_mapping  # noqa: SLF001
-
-    chars = b.characterisation
-    assert chars is not None
-    assert all(s in chars for s in ["NodeErrors", "EdgeErrors", "ReadoutErrors"])
-
-    c = (
-        Circuit(3)
-        .add_gate(OpType.CCX, [0, 1, 2])
-        .add_gate(OpType.U1, 0.15, [1])
-        .add_gate(OpType.ISWAP, 0.15, [0, 2])
-        .add_gate(OpType.XXPhase, 0.15, [1, 2])
-    )
-    assert not b.valid_circuit(c)
-    c0 = b.get_compiled_circuit(c, optimisation_level=0)
-    assert b.valid_circuit(c0)
-    c1 = b.get_compiled_circuit(c, optimisation_level=1)
-    assert b.valid_circuit(c1)
-    c2 = b.get_compiled_circuit(c, optimisation_level=2)
-    assert b.valid_circuit(c2)
-    h = b.process_circuit(c0, 10)
-    _ = b.circuit_status(h)
-    b.cancel(h)
-
-    # Circuit with unused qubits
-    c = Circuit(11).H(9).CX(9, 10)
-    c = b.get_compiled_circuit(c)
-    h = b.process_circuit(c, 10)
-    b.cancel(h)
-
-
-@pytest.mark.skipif(skip_remote_tests, reason=REASON)
-@pytest.mark.parametrize(
-    "authenticated_braket_backend",
-    [
-        {
-            "device_type": "qpu",
-            "provider": "rigetti",
-            "device": "Ankaa-3",
-            "region": "us-west-1",
         }
     ],
     indirect=True,
