@@ -369,7 +369,7 @@ class BraketBackend(Backend):
             )
         if self._verbatim and provider == "rigetti":
             raise ValueError(
-                f"The `verbatim` argument is not yet supported for Rigetti's Ankaa-3"
+                "The `verbatim` argument is not yet supported for Rigetti's Ankaa-3"
             )
         props = self._device.properties.dict()
         action = props["action"]
