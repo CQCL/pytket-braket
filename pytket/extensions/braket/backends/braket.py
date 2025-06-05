@@ -59,7 +59,6 @@ from pytket.passes import (
     CliffordSimp,
     CXMappingPass,
     DecomposeBoxes,
-    DefaultMappingPass,
     FlattenRegisters,
     FullPeepholeOptimise,
     KAKDecomposition,
@@ -702,6 +701,7 @@ class BraketBackend(Backend):
                     )
                 )
                 passes.append(NaivePlacementPass(arch))
+                passes.append(self.rebase_pass())
                 # If CX weren't supported by the device then we'd need to do another
                 # rebase_pass here. But we checked above that it is.
             if optimisation_level == 1:
@@ -725,8 +725,20 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             elif optimisation_level == 2:  # noqa: PLR2004
                 passes.append(FullPeepholeOptimise())
+                arch = self.backend_info.architecture
             if isinstance(self._arch, Architecture):
-                passes.append(DefaultMappingPass(self._arch))
+                passes.append(
+                    CXMappingPass(
+                        self._arch,
+                        NoiseAwarePlacement(
+                            self._arch,
+                            **get_avg_characterisation(self.characterisation),  # type: ignore
+                        ),
+                        directed_cx=False,
+                        delay_measures=True,
+                    )
+                )
+                passes.append(NaivePlacementPass(self._arch))
             if optimisation_level == 2:  # noqa: PLR2004
                 passes.append(KAKDecomposition(allow_swaps=False))
                 passes.append(CliffordSimp(allow_swaps=False))
