@@ -678,7 +678,7 @@ class BraketBackend(Backend):
         return self._rebase_pass
 
     @property
-    def verbatim(self):
+    def verbatim(self) -> bool:
         return self._verbatim
 
     def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
