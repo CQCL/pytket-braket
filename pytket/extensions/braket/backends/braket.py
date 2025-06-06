@@ -369,7 +369,7 @@ class BraketBackend(Backend):
             )
         if self._verbatim and provider == "rigetti":
             raise ValueError(
-                "The `verbatim` argument is not yet supported for Rigetti's Ankaa-3"
+                "The `verbatim` argument is not yet supported for Rigetti devices"
             )
         props = self._device.properties.dict()
         action = props["action"]
@@ -677,9 +677,13 @@ class BraketBackend(Backend):
     def rebase_pass(self) -> BasePass:
         return self._rebase_pass
 
+    @property
+    def verbatim(self):
+        return self._verbatim
+
     def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
-        if not self._verbatim:
+        if not self.verbatim:
             passes = [DecomposeBoxes()]
             if optimisation_level == 1:
                 passes.append(SynthesiseTket())
@@ -766,7 +770,7 @@ class BraketBackend(Backend):
     ) -> AwsQuantumTask | LocalQuantumTask:
         if self._device_type == _DeviceType.LOCAL:
             return self._device.run(bkcirc, shots=n_shots, **kwargs)
-        if self._verbatim:
+        if self.verbatim:
             bkcirc = braket.circuits.Circuit().add_verbatim_box(bkcirc)
         return self._device.run(
             bkcirc,
