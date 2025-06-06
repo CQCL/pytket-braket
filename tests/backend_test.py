@@ -600,10 +600,10 @@ def test_probabilities() -> None:
         .CX(0, 1)
         .Ry(1.8, 0)
     )
-    probs01 = b.get_probabilities(c)
-    probs10 = b.get_probabilities(c, qubits=[1, 0])
-    probs0 = b.get_probabilities(c, qubits=[0])
-    probs1 = b.get_probabilities(c, qubits=[1])
+    probs01 = b.get_probability_distribution(c)
+    probs10 = b.get_probability_distribution(c, qubits=[1, 0])
+    probs0 = b.get_probability_distribution(c, qubits=[0])
+    probs1 = b.get_probability_distribution(c, qubits=[1])
     assert probs01[0] == pytest.approx(probs10[0])
     assert probs01[1] == pytest.approx(probs10[2])
     assert probs01[2] == pytest.approx(probs10[1])
@@ -621,12 +621,12 @@ def test_probabilities_with_shots() -> None:
     b = BraketBackend(local=True)
     c = Circuit(2).V(1).CX(1, 0).S(1)
     c.measure_all()
-    probs_all = b.get_probabilities(c, n_shots=10)
+    probs_all = b.get_probability_distribution(c, n_shots=10)
     assert len(probs_all) == 4
     assert sum(probs_all) == pytest.approx(1)
     assert probs_all[1] == 0
     assert probs_all[2] == 0
-    probs1 = b.get_probabilities(c, n_shots=10, qubits=[1])
+    probs1 = b.get_probability_distribution(c, n_shots=10, qubits=[1])
     assert len(probs1) == 2
     assert sum(probs1) == pytest.approx(1)
     h = b.process_circuit(c, n_shots=10)
