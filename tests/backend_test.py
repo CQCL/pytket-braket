@@ -612,7 +612,7 @@ def test_probabilities() -> None:
     assert probs1[0] == pytest.approx(probs01[0] + probs01[2])
     h = b.process_circuit(c)
     res = b.get_result(h)
-    dist = res.get_probability_distribution()
+    dist = res.get_distribution()
     for (a0, a1), p in dist.items():
         assert probs01[2 * a0 + a1] == pytest.approx(p)
 
@@ -631,7 +631,7 @@ def test_probabilities_with_shots() -> None:
     assert sum(probs1) == pytest.approx(1)
     h = b.process_circuit(c, n_shots=10)
     res = b.get_result(h)
-    dist = res.get_probability_distribution()
+    dist = res.get_distribution()
     assert (1, 0) not in dist
     assert (0, 1) not in dist
 
