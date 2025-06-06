@@ -74,6 +74,7 @@ def fixture_authenticated_braket_backend(
         )
         auth_region = request.param.get("auth_region") or region
         authenticated_aws_session = get_authenticated_aws_session(region=auth_region)
+        verbatim = request.param.get("verbatim", False)
         backend = BraketBackend(
             device_type=device_type,
             provider=provider,
@@ -82,6 +83,7 @@ def fixture_authenticated_braket_backend(
             s3_bucket=s3_bucket,
             s3_folder=s3_folder,
             aws_session=authenticated_aws_session,
+            verbatim=verbatim,
         )
 
     return backend
