@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from pytket.circuit import Node
 
 
-def normalize_angle(n: float) -> float:
+def _normalize_angle(n: float) -> float:
     n0 = n % 4
     if n0 > 2:  # noqa: PLR2004
         n0 = n0 - 4
@@ -107,13 +107,13 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
         # Rx is a gate in the gate set of Rigetti's Ankaa-3.
         # It seems that the verbatim execution accepts an angle in (2*pi, -2*pi).
         elif optype == OpType.Rx:
-            bkcirc.rx(*qbs, normalize_angle(params[0]) * pi)
+            bkcirc.rx(*qbs, _normalize_angle(params[0]) * pi)
         elif optype == OpType.Ry:
             bkcirc.ry(*qbs, params[0] * pi)
         # Rz is a gate in the gate set of Rigetti's Ankaa-3.
         # It seems that the verbatim execution accepts an angle in (2*pi, -2*pi).
         elif optype == OpType.Rz:
-            bkcirc.rz(*qbs, normalize_angle(params[0]) * pi)
+            bkcirc.rz(*qbs, _normalize_angle(params[0]) * pi)
         elif optype == OpType.S:
             bkcirc.s(*qbs)
         elif optype == OpType.Sdg:
@@ -143,23 +143,23 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
         elif optype == OpType.Z:
             bkcirc.z(*qbs)
         elif optype == OpType.ZZPhase:
-            bkcirc.zz(*qbs, normalize_angle(params[0]) * pi)
+            bkcirc.zz(*qbs, _normalize_angle(params[0]) * pi)
         elif optype == OpType.GPI:
-            bkcirc.gpi(*qbs, normalize_angle(params[0]) * pi)
+            bkcirc.gpi(*qbs, _normalize_angle(params[0]) * pi)
         elif optype == OpType.GPI2:
-            bkcirc.gpi2(*qbs, normalize_angle(params[0]) * pi)
+            bkcirc.gpi2(*qbs, _normalize_angle(params[0]) * pi)
         elif optype == OpType.AAMS:
             bkcirc.ms(
                 *qbs,
-                normalize_angle(params[1]) * pi,
-                normalize_angle(params[2]) * pi,
-                normalize_angle(params[0]) * pi,
+                _normalize_angle(params[1]) * pi,
+                _normalize_angle(params[2]) * pi,
+                _normalize_angle(params[0]) * pi,
             )
         # PhasedX is a gate in the gate set of IQM's Garnet.
         # It seems that the verbatim execution accepts an angle in (2*pi, -2*pi).
         elif optype == OpType.PhasedX:
             bkcirc.prx(
-                *qbs, normalize_angle(params[0]) * pi, normalize_angle(params[1]) * pi
+                *qbs, _normalize_angle(params[0]) * pi, _normalize_angle(params[1]) * pi
             )
         elif optype == OpType.Measure:
             # Not wanted by braket, but must be tracked for final conversion of results.
