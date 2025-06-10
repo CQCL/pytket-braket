@@ -67,6 +67,7 @@ from pytket.passes import (
     SequencePass,
     SimplifyInitial,
     SynthesiseTket,
+    RxFromSX,
 )
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.placement import NoiseAwarePlacement
@@ -366,10 +367,6 @@ class BraketBackend(Backend):
         if self._verbatim and not aws_device_type == _DeviceType.QPU:
             raise ValueError(
                 f"The `verbatim` argument is not supported for {aws_device_type}"
-            )
-        if self._verbatim and provider == "rigetti":
-            raise ValueError(
-                "The `verbatim` argument is not yet supported for Rigetti devices"
             )
         props = self._device.properties.dict()
         action = props["action"]
@@ -751,7 +748,11 @@ class BraketBackend(Backend):
                 passes.append(KAKDecomposition(allow_swaps=False))
                 passes.append(CliffordSimp(allow_swaps=False))
                 passes.append(SynthesiseTket())
-            passes.append(self.rebase_pass())
+            if not self._device.provider_name == "Rigetti":
+                passes.append(self.rebase_pass())
+            else:
+                passes.append(AutoRebase({OpType.ISWAPMax, OpType.Rz, OpType.SX}))
+                passes.append(RxFromSX())
             passes.append(RemoveRedundancies())
         return SequencePass(passes)
 
