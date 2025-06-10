@@ -64,10 +64,10 @@ from pytket.passes import (
     KAKDecomposition,
     NaivePlacementPass,
     RemoveRedundancies,
+    RxFromSX,
     SequencePass,
     SimplifyInitial,
     SynthesiseTket,
-    RxFromSX,
 )
 from pytket.pauli import Pauli, QubitPauliString
 from pytket.placement import NoiseAwarePlacement
@@ -748,7 +748,7 @@ class BraketBackend(Backend):
                 passes.append(KAKDecomposition(allow_swaps=False))
                 passes.append(CliffordSimp(allow_swaps=False))
                 passes.append(SynthesiseTket())
-            if not self._device.provider_name == "Rigetti":
+            if self._device.provider_name != "Rigetti":
                 passes.append(self.rebase_pass())
             else:
                 passes.append(AutoRebase({OpType.ISWAPMax, OpType.Rz, OpType.SX}))
