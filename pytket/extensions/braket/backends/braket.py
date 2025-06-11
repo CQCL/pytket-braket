@@ -671,15 +671,15 @@ class BraketBackend(Backend):
     def required_predicates(self) -> list[Predicate]:
         return self._req_preds
 
+    @property
+    def verbatim(self) -> bool:
+        return self._verbatim
+
     def rebase_pass(self) -> BasePass:
         if self.verbatim and self._device.provider_name == "Rigetti":
             passes = [AutoRebase({OpType.ISWAPMax, OpType.Rz, OpType.SX}), RxFromSX()]
             return SequencePass(passes)
         return self._rebase_pass
-
-    @property
-    def verbatim(self) -> bool:
-        return self._verbatim
 
     def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
