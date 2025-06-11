@@ -689,7 +689,7 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             elif optimisation_level == 2:  # noqa: PLR2004
                 passes.append(FullPeepholeOptimise())
-            passes.extend(self.rebase_pass())
+            passes.append(self.rebase_pass())
             if (
                 (self._device_type == _DeviceType.QPU)
                 and (self.characterisation is not None)
