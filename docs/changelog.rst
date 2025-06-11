@@ -3,6 +3,12 @@
 Changelog
 ~~~~~~~~~
 
+0.42.0 (June 2025)
+-----------------
+
+* Update pytket minimum version requirement to 2.6.0.
+* Add optional "verbatim" argument to BracketBackend for supporting verbatim circuits execution. See: https://docs.aws.amazon.com/braket/latest/developerguide/braket-constructing-circuit.html?tag=local002-20#verbatim-compilation
+
 0.41.0 (May 2025)
 -----------------
 
