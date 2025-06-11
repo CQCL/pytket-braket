@@ -44,7 +44,7 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket >= 2.4.1",
+        "pytket >= 2.6.0",
         "amazon-braket-sdk ~= 1.53",
         "amazon-braket-schemas ~= 1.23",
         "amazon-braket-default-simulator ~= 1.20",
