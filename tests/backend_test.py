@@ -287,6 +287,7 @@ def test_ionq_verbatim(authenticated_braket_backend: BraketBackend) -> None:
         .add_gate(OpType.YYPhase, 0.15, [1, 2])
         .add_gate(OpType.SWAP, [0, 2])
         .add_gate(OpType.CCX, [0, 1, 2])
+        .measure_all()
     )
     assert not b.valid_circuit(c)
     c0 = b.get_compiled_circuit(c, optimisation_level=0)
@@ -393,6 +394,7 @@ def test_rigetti_verbatim(authenticated_braket_backend: BraketBackend) -> None:
         .add_gate(OpType.U1, 0.15, [1])
         .add_gate(OpType.ISWAP, 0.15, [0, 2])
         .add_gate(OpType.XXPhase, 0.15, [1, 2])
+        .measure_all()
     )
     assert not b.valid_circuit(c)
     for opt_level in range(3):
@@ -522,6 +524,7 @@ def test_iqm_verbatim(authenticated_braket_backend: BraketBackend) -> None:
         .add_gate(OpType.U1, 0.15, [1])
         .add_gate(OpType.ISWAP, 0.15, [0, 2])
         .add_gate(OpType.XXPhase, 0.15, [1, 2])
+        .measure_all()
     )
     assert not b.valid_circuit(c)
     c0 = b.get_compiled_circuit(c, optimisation_level=0)
