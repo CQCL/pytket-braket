@@ -672,7 +672,11 @@ class BraketBackend(Backend):
         return self._req_preds
 
     def rebase_pass(self) -> BasePass:
-        return self._rebase_pass
+        if self.verbatim and self._device.provider_name == "Rigetti":
+            passes = [AutoRebase({OpType.ISWAPMax, OpType.Rz, OpType.SX}), RxFromSX()]
+            return SequencePass(passes)
+        else:
+            return self._rebase_pass
 
     @property
     def verbatim(self) -> bool:
@@ -686,7 +690,7 @@ class BraketBackend(Backend):
                 passes.append(SynthesiseTket())
             elif optimisation_level == 2:  # noqa: PLR2004
                 passes.append(FullPeepholeOptimise())
-            passes.append(self.rebase_pass())
+            passes.extend(self.rebase_pass())
             if (
                 (self._device_type == _DeviceType.QPU)
                 and (self.characterisation is not None)
@@ -748,11 +752,7 @@ class BraketBackend(Backend):
                 passes.append(KAKDecomposition(allow_swaps=False))
                 passes.append(CliffordSimp(allow_swaps=False))
                 passes.append(SynthesiseTket())
-            if self._device.provider_name != "Rigetti":
-                passes.append(self.rebase_pass())
-            else:
-                passes.append(AutoRebase({OpType.ISWAPMax, OpType.Rz, OpType.SX}))
-                passes.append(RxFromSX())
+            passes.append(self.rebase_pass())
             passes.append(RemoveRedundancies())
         return SequencePass(passes)
 
