@@ -207,7 +207,7 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     assert b.valid_circuit(c1)
     c2 = b.get_compiled_circuit(c, optimisation_level=2)
     assert b.valid_circuit(c2)
-    h = b.process_circuit(c2, 10)
+    h = b.process_circuit(c0, 10)
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -295,7 +295,7 @@ def test_ionq_verbatim(authenticated_braket_backend: BraketBackend) -> None:
     assert b.valid_circuit(c1)
     c2 = b.get_compiled_circuit(c, optimisation_level=2)
     assert b.valid_circuit(c2)
-    h = b.process_circuit(c2, 10)
+    h = b.process_circuit(c0, 10)
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -348,7 +348,7 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     assert b.valid_circuit(c1)
     c2 = b.get_compiled_circuit(c, optimisation_level=2)
     assert b.valid_circuit(c2)
-    h = b.process_circuit(c2, 10)  # min shots = 10 for Rigetti
+    h = b.process_circuit(c0, 10)  # min shots = 10 for Rigetti
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -395,25 +395,14 @@ def test_rigetti_verbatim(authenticated_braket_backend: BraketBackend) -> None:
         .add_gate(OpType.XXPhase, 0.15, [1, 2])
     )
     assert not b.valid_circuit(c)
-    c0 = b.get_compiled_circuit(c, optimisation_level=0)
-    assert b.valid_circuit(c0)
-    # Valid angles for Rx are integer multiples of pi/2
-    for i in c0:
-        if i.op.type == OpType.Rx:
-            assert i.op.params[0] % 0.5 == 0
-    c1 = b.get_compiled_circuit(c, optimisation_level=1)
-    assert b.valid_circuit(c1)
-    # Valid angles for Rx are integer multiples of pi/2
-    for i in c1:
-        if i.op.type == OpType.Rx:
-            assert i.op.params[0] % 0.5 == 0
-    c2 = b.get_compiled_circuit(c, optimisation_level=2)
-    assert b.valid_circuit(c2)
-    # Valid angles for Rx are integer multiples of pi/2
-    for i in c2:
-        if i.op.type == OpType.Rx:
-            assert i.op.params[0] % 0.5 == 0
-    h = b.process_circuit(c2, 10)  # min shots = 10 for Rigetti
+    for opt_level in range(3):
+        c = b.get_compiled_circuit(c, optimisation_level=opt_level)
+        assert b.valid_circuit(c)
+        # Valid angles for Rx are integer multiples of pi/2
+        for i in c:
+            if i.op.type == OpType.Rx:
+                assert i.op.params[0] % 0.5 == 0
+    h = b.process_circuit(c, 10)  # min shots = 10 for Rigetti
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -488,7 +477,7 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
     assert b.valid_circuit(c1)
     c2 = b.get_compiled_circuit(c, optimisation_level=2)
     assert b.valid_circuit(c2)
-    h = b.process_circuit(c2, 10)
+    h = b.process_circuit(c0, 10)
     _ = b.circuit_status(h)
     b.cancel(h)
 
@@ -541,7 +530,7 @@ def test_iqm_verbatim(authenticated_braket_backend: BraketBackend) -> None:
     assert b.valid_circuit(c1)
     c2 = b.get_compiled_circuit(c, optimisation_level=2)
     assert b.valid_circuit(c2)
-    h = b.process_circuit(c2, 10)
+    h = b.process_circuit(c0, 10)
     _ = b.circuit_status(h)
     b.cancel(h)
 
