@@ -675,8 +675,7 @@ class BraketBackend(Backend):
         if self.verbatim and self._device.provider_name == "Rigetti":
             passes = [AutoRebase({OpType.ISWAPMax, OpType.Rz, OpType.SX}), RxFromSX()]
             return SequencePass(passes)
-        else:
-            return self._rebase_pass
+        return self._rebase_pass
 
     @property
     def verbatim(self) -> bool:
