@@ -64,6 +64,7 @@ from pytket.passes import (
     KAKDecomposition,
     NaivePlacementPass,
     RemoveRedundancies,
+    RxFromSX,
     SequencePass,
     SimplifyInitial,
     SynthesiseTket,
@@ -366,10 +367,6 @@ class BraketBackend(Backend):
         if self._verbatim and not aws_device_type == _DeviceType.QPU:
             raise ValueError(
                 f"The `verbatim` argument is not supported for {aws_device_type}"
-            )
-        if self._verbatim and provider == "rigetti":
-            raise ValueError(
-                "The `verbatim` argument is not yet supported for Rigetti devices"
             )
         props = self._device.properties.dict()
         action = props["action"]
@@ -674,12 +671,15 @@ class BraketBackend(Backend):
     def required_predicates(self) -> list[Predicate]:
         return self._req_preds
 
-    def rebase_pass(self) -> BasePass:
-        return self._rebase_pass
-
     @property
     def verbatim(self) -> bool:
         return self._verbatim
+
+    def rebase_pass(self) -> BasePass:
+        if self.verbatim and self._device.provider_name == "Rigetti":
+            passes = [AutoRebase({OpType.ISWAPMax, OpType.Rz, OpType.SX}), RxFromSX()]
+            return SequencePass(passes)
+        return self._rebase_pass
 
     def default_compilation_pass(self, optimisation_level: int = 2) -> BasePass:
         assert optimisation_level in range(3)
