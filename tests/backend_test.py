@@ -173,7 +173,8 @@ def test_ionq(authenticated_braket_backend: BraketBackend) -> None:
     assert b.supports_shots
     assert not b.supports_state
     assert not b.verbatim
-    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job.
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit
+    # are modified by Braket when executing a job.
     assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     # Device is fully connected
@@ -261,7 +262,9 @@ def test_ionq_verbatim(authenticated_braket_backend: BraketBackend) -> None:
     assert b.supports_shots
     assert not b.supports_state
     assert b.verbatim
-    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job. Verbatim execution requires that b._supports_client_qubit_mapping is set to True.
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit
+    # are modified by Braket when executing a job. Verbatim execution requires
+    # that b._supports_client_qubit_mapping is set to True.
     assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     # Device is fully connected
@@ -328,7 +331,8 @@ def test_rigetti(authenticated_braket_backend: BraketBackend) -> None:
     assert b.supports_shots
     assert not b.supports_state
     assert not b.verbatim
-    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job.
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit
+    # are modified by Braket when executing a job.
     assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     chars = b.characterisation
@@ -381,7 +385,9 @@ def test_rigetti_verbatim(authenticated_braket_backend: BraketBackend) -> None:
     assert b.supports_shots
     assert not b.supports_state
     assert b.verbatim
-    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job. Verbatim execution requires that b._supports_client_qubit_mapping is set to True.
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit
+    # are modified by Braket when executing a job. Verbatim execution requires
+    # that b._supports_client_qubit_mapping is set to True.
     assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     chars = b.characterisation
@@ -458,7 +464,8 @@ def test_iqm(authenticated_braket_backend: BraketBackend) -> None:
     assert b.supports_shots
     assert not b.supports_state
     assert not b.verbatim
-    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job.
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit
+    # are modified by Braket when executing a job.
     assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     chars = b.characterisation
@@ -511,7 +518,9 @@ def test_iqm_verbatim(authenticated_braket_backend: BraketBackend) -> None:
     assert b.supports_shots
     assert not b.supports_state
     assert b.verbatim
-    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit is relabeled by Braket when executing a job. Verbatim execution requires that b._supports_client_qubit_mapping is set to True.
+    # If b._supports_client_qubit_mapping is False, the qubit labels in a circuit
+    # are modified by Braket when executing a job. Verbatim execution requires
+    # that b._supports_client_qubit_mapping is set to True.
     assert b._supports_client_qubit_mapping  # noqa: SLF001
 
     chars = b.characterisation
