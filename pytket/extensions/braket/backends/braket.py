@@ -746,7 +746,7 @@ class BraketBackend(Backend):
 
         * `postprocess`: apply end-of-circuit simplifications and classical
           postprocessing to improve fidelity of results (bool, default False)
-          
+
         * `simplify_initial`: apply the pytket :py:meth:`pytket.passes.SimplifyInitial` pass to improve
           fidelity of results assuming all qubits initialized to zero (bool, default
           False)
@@ -1062,7 +1062,7 @@ class BraketBackend(Backend):
           result, in seconds (default: 5 days).
         - `poll_interval_seconds` (int) : Polling interval for synchronous retrieval of
           result, in seconds (default: 1 second).
-        
+
         :return: :math:`\\left<\\psi | P | \\psi \\right>`
         """
         if valid_check:
