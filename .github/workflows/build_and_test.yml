@@ -44,6 +44,7 @@ jobs:
         pip install poetry
         cd docs
         bash ./install.sh
+        poetry run pip install ../.
         poetry run bash ./build-docs.sh
       env:
         PYTKET_RUN_REMOTE_TESTS: 1
