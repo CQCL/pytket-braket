@@ -368,6 +368,10 @@ class BraketBackend(Backend):
             raise ValueError(
                 f"The `verbatim` argument is not supported for {aws_device_type}"
             )
+        if self._verbatim and provider == "ionq":
+            raise ValueError(
+                f"The `verbatim` argument is not yet supported for IonQ devices"
+            )
         props = self._device.properties.dict()
         action = props["action"]
         device_info = action.get(DeviceActionType.JAQCD)
