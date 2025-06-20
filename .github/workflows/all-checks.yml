@@ -9,7 +9,6 @@ on:
       - main
       - "wheel/**"
       - "runci/**"
-      - infra/uv-and-workflows
   release:
     types:
       - created

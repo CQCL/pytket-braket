@@ -37,6 +37,9 @@ documentation = "https://tket.quantinuum.com/extensions/pytket-braket/index.html
 source = "https://github.com/CQCL/pytket-braket"
 tracker = "https://github.com/CQCL/pytket-braket/issues"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages]
 find = {}
 
