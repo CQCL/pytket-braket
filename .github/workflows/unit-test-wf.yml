@@ -3,6 +3,10 @@ name: Unit tests
 on:
   workflow_call:
     inputs:
+      os:
+        description: "Operating System to build on"
+        required: true
+        type: string
       pyver:
         description: "Python version to build on"
         required: true
@@ -11,6 +15,7 @@ on:
 jobs:
   unit-tests:
     name: Unit tests
+    runs-on: ${{ inputs.os }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4

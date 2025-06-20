@@ -3,6 +3,10 @@ name: Static checks (linting, mypy, and docs)
 on:
   workflow_call:
     inputs:
+      os:
+        description: "Operating System to build on"
+        required: true
+        type: string
       pyver:
         description: "Python version to build on"
         required: true
@@ -11,6 +15,7 @@ on:
 jobs:
   static-checks:
     name: Static checks (linting, mypy, and docs)
+    runs-on: ${{ inputs.os }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
