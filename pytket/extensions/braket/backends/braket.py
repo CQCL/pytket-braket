@@ -363,14 +363,14 @@ class BraketBackend(Backend):
             elif aws_device_type == AwsDeviceType.QPU:
                 self._device_type = _DeviceType.QPU
             else:
-                raise ValueError(f"Unsupported device type {aws_device_type}")
+                raise ValueError(Unsupported device type {aws_device_type}")
         if self._verbatim and not aws_device_type == _DeviceType.QPU:
             raise ValueError(
                 f"The `verbatim` argument is not supported for {aws_device_type}"
             )
         if self._verbatim and provider == "ionq":
             raise ValueError(
-                f"The `verbatim` argument is not yet supported for IonQ devices"
+                "The `verbatim` argument is not yet supported for IonQ devices"
             )
         props = self._device.properties.dict()
         action = props["action"]
