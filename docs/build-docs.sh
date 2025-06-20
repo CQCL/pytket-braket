@@ -10,6 +10,6 @@ EXTENSION_NAME="$(basename "$(dirname `pwd`)")"
 sphinx-build -W -b html -D html_title="$EXTENSION_NAME" . build || exit 1
 sphinx-build -W -v -b coverage . build/coverage || exit 1
 # Remove copied files. This ensures reusability.
-rm -r _static 
+rm -r _static
 rm -r quantinuum-sphinx
 rm conf.py

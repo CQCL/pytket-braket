@@ -1,0 +1,32 @@
+name: Unit tests
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: "Operating System to build on"
+        required: true
+        type: string
+      pyver:
+        description: "Python version to build on"
+        required: true
+        type: string
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.20"
+          enable-cache: true
+      - name: Install Python ${{ inputs.pyver }}
+        run: uv python install ${{ inputs.pyver }}
+      - name: Setup dependencies
+        run: uv sync --python ${{ inputs.pyver }}
+      - name: Pytest
+        run: uv run pytest
