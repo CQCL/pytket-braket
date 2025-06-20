@@ -10,6 +10,7 @@ with CQC tket, a set of quantum programming tools.
 executed on a range of devices and simulators via Amazon's Braket service.
 
 Some useful links:
+
 - [API Documentation](https://tket.quantinuum.com/extensions/pytket-braket/)
 
 ## Getting started
@@ -74,7 +75,7 @@ To run the tests for a module:
 
 1. `cd` into that module's `tests` directory;
 2. ensure you have installed `pytest`, `hypothesis`, and any modules listed in
-the `test-requirements.txt` file (all via `pip`);
+   the `test-requirements.txt` file (all via `pip`);
 3. run `pytest`.
 
 When adding a new feature, please add a test for it. When fixing a bug, please

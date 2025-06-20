@@ -3,53 +3,18 @@ name: Release
 on:
   push:
     branches:
-      - 'wheel/**'
+      - "wheel/**"
   release:
     types:
       - created
       - edited
 
 jobs:
-  braket-checks:
-    name: Build, test and store artifact
-    runs-on: 'ubuntu-latest'
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: '0'
-        submodules: true
-    - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    - name: Build and test
-      shell: bash
-      run: |
-        ./.github/workflows/build-test nomypy
-    - uses: actions/upload-artifact@v4
-      with:
-        name: wheel
-        path: wheelhouse/
-
-  publish_to_pypi:
-    name: Publish to pypi
-    if: github.event_name == 'release'
-    needs: braket-checks
-    runs-on: 'ubuntu-latest'
-    steps:
-    - name: Download wheel
-      uses: actions/download-artifact@v4
-      with:
-        path: wheelhouse
-        pattern: wheel
-    - name: Put it in the dist folder
-      run: |
-        mkdir dist
-        for w in `find wheelhouse/ -type f -name "*.whl"` ; do cp $w dist/ ; done
-    - name: Publish wheel
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_PYTKET_BRAKET_API_TOKEN }}
-        verbose: true
+  build-and-publish:
+    name: Build, test, and store artifact, and upload to pypi
+    uses: CQCL/pytket-braket/.github/workflows/release-wf.yml@infra/uv-and-workflows
+    with:
+      pyver: "3.10"
+      publish: ${{ github.event_name == 'release' }}
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_PYTKET_BRAKET_API_TOKEN }}

@@ -1,0 +1,45 @@
+name: Static and unit tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - "wheel/**"
+      - "runci/**"
+  release:
+    types:
+      - created
+      - edited
+  schedule:
+    # 04:00 every Tuesday morning
+    - cron: "0 4 * * 2"
+
+jobs:
+  static-checks:
+    name: Static tests
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        pyver: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Static checks
+        uses: CQCL/pytket-braket/.github/workflows/static-checks-wf.yml@infra/uv-and-workflows
+        with:
+          pyver: ${{ matrix.pyver }}
+
+  unit-tests:
+    name: Unit tests
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        pyver: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Unit tests
+        uses: CQCL/pytket-braket/.github/workflows/unit-test-wf.yml@infra/uv-and-workflows
+        with:
+          pyver: ${{ matrix.pyver }}

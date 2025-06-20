@@ -377,14 +377,14 @@ class BraketBackend(Backend):
             # This can happen with quantum anealers (e.g. D-Wave devices)
             raise ValueError(f"Unsupported device {device}")
 
-        supported_ops = set(  # noqa: C401
+        supported_ops = {
             op.lower()
             for op in (
                 props["paradigm"]["nativeGateSet"]
                 if self._verbatim
                 else device_info["supportedOperations"]
             )
-        )
+        }
         supported_result_types = device_info["supportedResultTypes"]
         self._result_types = set()
         for rt in supported_result_types:
@@ -519,10 +519,10 @@ class BraketBackend(Backend):
                 connectivity_graph = connectivity["connectivityGraph"]
                 # Convert strings to ints
                 if schema in (IQM_SCHEMA, RIGETTI_SCHEMA):
-                    connectivity_graph = dict(  # noqa: C402
-                        (int(k), [int(v) for v in l])
+                    connectivity_graph = {
+                        int(k): [int(v) for v in l]
                         for k, l in connectivity_graph.items()
-                    )
+                    }
                     # each connectivity graph key will be an int
                     # connectivity_graph values will be lists
                     all_qubits_set = set()
@@ -992,9 +992,9 @@ class BraketBackend(Backend):
             props = aws_device.properties.dict()
             try:
                 device_info = props["action"][DeviceActionType.JAQCD]
-                supported_ops = set(  # noqa: C401
+                supported_ops = {
                     op.lower() for op in device_info["supportedOperations"]
-                )
+                }
                 singleqs, multiqs = cls._get_gate_set(
                     supported_ops, device_type, verbatim
                 )
