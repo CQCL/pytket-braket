@@ -279,7 +279,7 @@ class BraketBackend(Backend):
         If `local=True`, other parameters are ignored.
 
         All parameters except `device` can be set in config using
-        :py:meth:`pytket.extensions.braket.set_braket_config`.
+        :py:meth:`pytket.extensions.braket.backends.config.set_braket_config`.
         For `device_type`, `provider` and `device` if no parameter
         is specified as a keyword argument or
         in the config file the defaults specified below are used.
@@ -367,6 +367,10 @@ class BraketBackend(Backend):
         if self._verbatim and not aws_device_type == _DeviceType.QPU:
             raise ValueError(
                 f"The `verbatim` argument is not supported for {aws_device_type}"
+            )
+        if self._verbatim and provider == "ionq":
+            raise ValueError(
+                "The `verbatim` argument is not yet supported for IonQ devices"
             )
         props = self._device.properties.dict()
         action = props["action"]
@@ -806,9 +810,11 @@ class BraketBackend(Backend):
     ) -> list[ResultHandle]:
         """
         Supported `kwargs`:
-        - `postprocess`: apply end-of-circuit simplifications and classical
+
+        * `postprocess`: apply end-of-circuit simplifications and classical
           postprocessing to improve fidelity of results (bool, default False)
-        - `simplify_initial`: apply the pytket ``SimplifyInitial`` pass to improve
+
+        * `simplify_initial`: apply the pytket :py:meth:`pytket.passes.SimplifyInitial` pass to improve
           fidelity of results assuming all qubits initialized to zero (bool, default
           False)
         """
@@ -953,7 +959,7 @@ class BraketBackend(Backend):
     @classmethod
     def available_devices(cls, **kwargs: Any) -> list[BackendInfo]:
         """
-        See :py:meth:`pytket.backends.Backend.available_devices`.
+        See :py:meth:`pytket.backends.backend.Backend.available_devices`.
         Supported kwargs:
 
         - `region` (default None). The particular AWS region to search for
@@ -962,6 +968,8 @@ class BraketBackend(Backend):
         - `aws_session` (default None). The credentials of the provided session
           will be used to create a new session with the specified region. Otherwise,
           a default new session will be created
+
+        :return: A list of BackendInfo objects describing available devices.
         """
         region: str | None = kwargs.get("region")
         aws_session: AwsSession | None = kwargs.get("aws_session")
@@ -1017,7 +1025,7 @@ class BraketBackend(Backend):
 
     def get_result(self, handle: ResultHandle, **kwargs: KwargTypes) -> BackendResult:
         """
-        See :py:meth:`pytket.backends.Backend.get_result`.
+        See :py:meth:`pytket.backends.backend.Backend.get_result`.
         Supported kwargs: `timeout` (default none), `wait` (default 1s).
         """
         try:
@@ -1115,7 +1123,7 @@ class BraketBackend(Backend):
         """
         Compute the (exact or empirical) expectation of the observed eigenvalues.
 
-        See `pytket.expectations.get_pauli_expectation_value`.
+        See :py:func:`pytket.utils.get_pauli_expectation_value`.
 
         If `n_shots > 0` the probabilities are calculated empirically by measurements.
         If `n_shots = 0` (if supported) they are calculated exactly by simulation.
@@ -1126,6 +1134,8 @@ class BraketBackend(Backend):
           result, in seconds (default: 5 days).
         - `poll_interval_seconds` (int) : Polling interval for synchronous retrieval of
           result, in seconds (default: 1 second).
+
+        :return: :math:`\\left<\\psi | P | \\psi \\right>`
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
@@ -1144,12 +1154,12 @@ class BraketBackend(Backend):
         """
         Compute the (exact or empirical) expectation of the observed eigenvalues.
 
-        See `pytket.expectations.get_operator_expectation_value`.
+        See :py:func:`pytket.utils.get_operator_expectation_value`.
 
         If `n_shots > 0` the probabilities are calculated empirically by measurements.
         If `n_shots = 0` (if supported) they are calculated exactly by simulation.
 
-        Supported `kwargs` are as for `BraketBackend.get_pauli_expectation_value`.
+        Supported `kwargs` are as for :py:meth:`~.BraketBackend.get_pauli_expectation_value`.
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
@@ -1170,12 +1180,12 @@ class BraketBackend(Backend):
         """
         Compute the (exact or empirical) variance of the observed eigenvalues.
 
-        See `pytket.expectations.get_pauli_expectation_value`.
+        See :py:func:`pytket.utils.get_pauli_expectation_value`.
 
         If `n_shots > 0` the probabilities are calculated empirically by measurements.
         If `n_shots = 0` (if supported) they are calculated exactly by simulation.
 
-        Supported `kwargs` are as for `BraketBackend.get_pauli_expectation_value`.
+        Supported `kwargs` are as for :py:meth:`~.BraketBackend.get_pauli_expectation_value`.
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
@@ -1194,12 +1204,12 @@ class BraketBackend(Backend):
         """
         Compute the (exact or empirical) variance of the observed eigenvalues.
 
-        See `pytket.expectations.get_operator_expectation_value`.
+        See :py:func:`pytket.utils.get_operator_expectation_value`.
 
         If `n_shots > 0` the probabilities are calculated empirically by measurements.
         If `n_shots = 0` (if supported) they are calculated exactly by simulation.
 
-        Supported `kwargs` are as for `BraketBackend.get_pauli_expectation_value`.
+        Supported `kwargs` are as for :py:meth:`~.BraketBackend.get_pauli_expectation_value`.
         """
         if valid_check:
             self._check_all_circuits([state_circuit], nomeasure_warn=False)
@@ -1221,7 +1231,7 @@ class BraketBackend(Backend):
         If `n_shots > 0` the probabilities are calculated empirically by measurements.
         If `n_shots = 0` (if supported) they are calculated exactly by simulation.
 
-        Supported `kwargs` are as for `BraketBackend.process_circuits`.
+        Supported `kwargs` are as for :py:meth:`~.BraketBackend.process_circuits`.
 
         The order is big-endian with respect to the order of qubits in the argument.
         For example, if qubits=[0,1] then the order of probabilities is [p(0,0), p(0,1),
@@ -1262,7 +1272,7 @@ class BraketBackend(Backend):
         """
         Compute the complex coefficients of the final state.
 
-        Supported `kwargs` are as for `BraketBackend.process_circuits`.
+        Supported `kwargs` are as for :py:meth:`~.BraketBackend.process_circuits`.
 
         :param states: classical states of interest, as binary strings of '0' and '1'
 
