@@ -41,7 +41,7 @@ source = "https://github.com/CQCL/pytket-braket"
 tracker = "https://github.com/CQCL/pytket-braket/issues"
 
 [tool.setuptools.packages.find]
-include = [pytket.*]
+include = ["pytket.*"]
 
 [tool.setuptools.dynamic]
 # version = {attr = "pytket.extensions.braket._metadata.__extension_version__"}
