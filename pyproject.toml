@@ -1,7 +1,9 @@
 [project]
 name = "pytket-braket"
-dynamic = ["version"]
-requires-python = ">=3.10"
+# dynamic = ["version"]
+requires-python = ">=3.11,<4.0"
+version = "0.43.0"
+
 description = "Extension for pytket, providing access to Amazon Braket backends"
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -31,6 +33,7 @@ dependencies = [
     "amazon-braket-default-simulator ~= 1.20",
     "boto3-stubs",
 ]
+
 
 [project.urls]
 documentation = "https://tket.quantinuum.com/extensions/pytket-braket/index.html"
