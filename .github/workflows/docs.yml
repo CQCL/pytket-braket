@@ -1,0 +1,28 @@
+name: Run doc build and create artifact
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - "runci/**"
+  schedule:
+    # 04:00 every Tuesday morning
+    - cron: "0 4 * * 2"
+
+jobs:
+  docs-checks:
+    name: Run doc build and create artifact 
+    runs-on: 'ubuntu-latest'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+        submodules: true    
+    - uses: actions/upload-artifact@v4
+      if: github.event_name == 'release' || contains(github.ref, 'refs/heads/wheel')
+      with:
+        name: artefact-${{ matrix.os }}
+        path: wheelhouse/
