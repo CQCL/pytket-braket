@@ -38,10 +38,6 @@ documentation = "https://tket.quantinuum.com/extensions/pytket-braket/index.html
 source = "https://github.com/CQCL/pytket-braket"
 tracker = "https://github.com/CQCL/pytket-braket/issues"
 
-[tool.setuptools.packages.find]
-where = ["pytket/extensions/braket"]
-include = ["pytket.*"]
-
 [tool.setuptools.dynamic]
 version = {attr = "pytket.extensions.braket._metadata.__extension_version__"}
 
