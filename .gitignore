@@ -11,6 +11,5 @@ obj
 docs/extensions
 .ipynb_checkpoints
 .DS_Store
-docs/poetry.lock
 node_modules
 uv.lock
