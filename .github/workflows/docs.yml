@@ -30,7 +30,7 @@ jobs:
       run: pip install poetry
     - name: Install extension
       run: |
-        poetry install
+        poetry install --no-root
     - name: Install docs dependencies
       run: |
         cd docs && bash ./install.sh
