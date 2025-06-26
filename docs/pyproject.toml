@@ -1,22 +1,28 @@
-[tool.poetry]
-package-mode = false
+[project]
 name = "pytket-docs-theming"
 version = "0.1.0"
 description = "Dependencies for the pytket extensions documentation"
-authors = ["CalMacCQ <93673602+CalMacCQ@users.noreply.github.com>"]
-readme = "README.md"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-Sphinx = "^8.0.2"
-sphinx-autodoc-typehints = "^2.2.3"
-sphinx-copybutton = "^0.5.2"
-enum-tools = { extras = ["sphinx"], version = "^0.12.0" }
-furo = "^2024.8.6"
-myst-nb = "^1.1.1"
-sphinxcontrib-googleanalytics = "^0.4"
-pytket-braket = ">=0.40.0"
+authors = [
+    { name = "TKET development team", email = "tket-support@quantinuum.com" }
+]
+maintainers = [
+    { name = "TKET development team", email = "tket-support@quantinuum.com" },
+]
+
+readme = "README.md"
+dependencies = [
+    "Sphinx ~= 8.0.2",
+    "sphinx-autodoc-typehints ~= 2.2.3",
+    "sphinx-copybutton ~= 0.5.2",
+    "enum-tools[sphinx] ~= 0.12.0",
+    "furo ~= 2024.8.6",
+    "myst-nb ~= 1.1.1",
+    "sphinxcontrib-googleanalytics ~= 0.4",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+#requires = ["uv_build>=0.7.13,<0.8.0"]
+#build-backend = "uv_build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
