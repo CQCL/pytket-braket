@@ -1,0 +1,22 @@
+[tool.poetry]
+package-mode = false
+name = "pytket-docs-theming"
+version = "0.1.0"
+description = "Dependencies for the pytket extensions documentation"
+authors = ["CalMacCQ <93673602+CalMacCQ@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Sphinx = "^8.0.2"
+sphinx-autodoc-typehints = "^2.2.3"
+sphinx-copybutton = "^0.5.2"
+enum-tools = { extras = ["sphinx"], version = "^0.12.0" }
+furo = "^2024.8.6"
+myst-nb = "^1.1.1"
+sphinxcontrib-googleanalytics = "^0.4"
+pytket-braket = ">=0.40.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
