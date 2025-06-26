@@ -35,6 +35,9 @@ dependencies = [
 ]
 
 
+[tool.poetry]
+packages = [{include = "pytket.*", from="pytket"}]
+
 [project.urls]
 documentation = "https://tket.quantinuum.com/extensions/pytket-braket/index.html"
 source = "https://github.com/CQCL/pytket-braket"
