@@ -1,5 +1,7 @@
 install:
-    cd docs && bash ./install.sh && pip install ../.
+    cp docs/pytket-docs-theming/extensions/pyproject.toml docs
+    cp docs/pytket-docs-theming/extensions/poetry.lock docs
+    cd docs && poetry install && pip install ../.
 
 
 prepare: install
@@ -26,4 +28,4 @@ cleanup:
     rm -rf docs/.jupyter_cache
     rm -rf docs/jupyter_execute
     rm -rf docs/_static
-    rm docs/conf.py
+    rm -f docs/conf.py
