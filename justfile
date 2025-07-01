@@ -1,7 +1,7 @@
 install:
     cp docs/pytket-docs-theming/extensions/pyproject.toml docs
     cp docs/pytket-docs-theming/extensions/poetry.lock docs
-    cd docs && poetry install && pip install ../.
+    cd docs && poetry install && poetry run pip install ../.
 
 
 prepare: install
