@@ -1,10 +1,22 @@
 install:
     cd docs && bash ./install.sh && pip install ../.
 
-build: install
+
+prepare: install
     cp -R docs/pytket-docs-theming/_static docs
     cp docs/pytket-docs-theming/conf.py docs
-    cd docs && poetry run sphinx-build -b html . build 
+
+build *SPHINX_ARGS: prepare
+    cd docs && poetry run sphinx-build {{SPHINX_ARGS}} -b html . build 
+
+linkcheck: prepare
+    cd docs && poetry run sphinx-build -b linkcheck . build 
+
+coverage:
+    cd docs && poetry run sphinx-build -v -b coverage . build/coverage 
+
+build-strict: prepare
+    just build -W # Fail on sphinx warnings
 
 serve: build
     npm exec serve docs/build
