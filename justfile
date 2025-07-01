@@ -18,6 +18,8 @@ coverage: install
 
 build-strict: install
     just build -W # Fail on sphinx warnings
+    just linkcheck
+    just coverage
 
 serve: build
     npm exec serve docs/build
