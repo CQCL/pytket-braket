@@ -4,11 +4,13 @@ prepare:
     cp docs/pytket-docs-theming/pyproject.toml docs
     cp docs/pytket-docs-theming/uv.lock docs
 
+PROJECT_NAME := `(basename $(pwd))`
+
 install: prepare
     cd docs && uv sync && uv pip install ../.
 
 build *SPHINX_ARGS: install
-    cd docs && uv run sphinx-build {{SPHINX_ARGS}} -b html . build 
+    cd docs && uv run sphinx-build {{SPHINX_ARGS}} -b html . build -D html_title={{PROJECT_NAME}}
 
 linkcheck: install
     cd docs && uv run sphinx-build -b linkcheck . build 
