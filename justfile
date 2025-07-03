@@ -5,7 +5,7 @@ prepare:
     cp docs/pytket-docs-theming/uv.lock docs
 
 install: prepare
-    cd docs && uv sync && uv run pip install ../.
+    cd docs && uv sync && uv pip install ../.
 
 build *SPHINX_ARGS: install
     cd docs && uv run sphinx-build {{SPHINX_ARGS}} -b html . build 
