@@ -240,9 +240,11 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:  # noqa: PLR0912, PLR0915
             tkcirc.add_gate(OpType.ZZPhase, op.angle / pi, qbs)
         else:
             # The following don't have direct equivalents:
+            # - CCPrx: classically controlled PhasedX.
             # - CPhaseShift00, CPhaseShift01, CPhaseShift10: diagonal unitaries with 1s
             # on the diagonal except for a phase e^{ia} in the (0,0), (1,1) or (2,2)
             # position respectively.
+            # - MeasureFF: measurement with feedforward.
             # - PSwap: unitary with 1s at (0,0) and (3,3), a phase e^{ia} at (1,2) and
             # (2,1), and zeros elsewhere.
             # They could be decomposed into pytket gates, but it would be better to add
