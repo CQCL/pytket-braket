@@ -202,6 +202,8 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:  # noqa: PLR0912, PLR0915
             tkcirc.add_gate(OpType.ISWAPMax, qbs)
         elif opname == "PhaseShift":
             tkcirc.add_gate(OpType.U1, op.angle / pi, qbs)
+        elif opname == "PRx":
+            tkcirc.add_gate(OpType.PhasedX, [op.angle_1 / pi, op.angle_2 / pi], qbs)
         elif opname == "Rx":
             tkcirc.add_gate(OpType.Rx, op.angle / pi, qbs)
         elif opname == "Ry":
