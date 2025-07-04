@@ -3,6 +3,12 @@
 Changelog
 ~~~~~~~~~
 
+Unreleased
+----------
+
+* Add `cc_prx` and `measure_ff` to dictionary of recognized gates.
+* Support PRx (OpType.PhasedX) in conversion functions.
+
 0.42.0 (June 2025)
 ------------------
 

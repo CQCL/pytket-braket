@@ -46,6 +46,7 @@ def test_convert() -> None:
     c.add_gate(OpType.YYPhase, 0.8, [0, 1])
     c.add_gate(OpType.Z, [0])
     c.add_gate(OpType.ZZPhase, 0.9, [0, 1])
+    c.add_gate(OpType.PhasedX, [0.1, 0.2], [0])
     bkc, _target_qubits, _measures = tk_to_braket(c)
     c1 = braket_to_tk(bkc)
     assert c.get_commands() == c1.get_commands()
