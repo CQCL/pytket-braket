@@ -29,10 +29,13 @@ jobs:
     - name: Install Python 3.11
       run: uv python install 3.11
     - name: Setup dependencies
-      run: uv sync --python 3.11
+      run: # uv sync --python 3.11
     - name: Install extension
       run: |
         uv pip install .
+    - name: Install extension
+      run: |
+        uv pip show pytket
     - name: Install docs dependencies
       run: |
         cd docs
