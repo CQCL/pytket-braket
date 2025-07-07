@@ -28,8 +28,6 @@ jobs:
         enable-cache: true
     - name: Install Python 3.11
       run: uv python install 3.11
-    - name: Setup dependencies
-      run: uv pip show pytket # uv sync --python 3.11
     - name: Install extension
       run: |
         uv pip install .
