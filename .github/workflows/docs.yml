@@ -21,21 +21,34 @@ jobs:
       with:
         fetch-depth: '0'
         submodules: true
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v5
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
       with:
-        python-version: '3.11'
+        version: "0.4.20"
+        enable-cache: true
+    - name: Install Python 3.11
+      run: uv python install 3.11
+    - name: Setup dependencies
+      run: uv sync --python 3.11
     - name: Install extension
       run: |
-        pip install .
+        uv pip install .
     - name: Install docs dependencies
       run: |
         cd docs
-        pip install .
+        uv pip install .
     - name: Build docs
       timeout-minutes: 20
       run: |
-        cd docs && bash ./build-docs.sh
+        cd docs && uv run sphinx-build -W -b html . build -D html_title=pytket-braket
+    - name: Check links
+      timeout-minutes: 20
+      run: |
+        cd docs && uv run sphinx-build -b linkcheck . build
+    - name: Check coverage
+      timeout-minutes: 20
+      run: |
+        cd docs && uv run sphinx-build -v -b coverage . build/coverage 
     - uses: actions/upload-artifact@v4
       with:
         name: docs
