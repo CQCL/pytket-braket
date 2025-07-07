@@ -33,9 +33,15 @@ jobs:
     - name: Install extension
       run: |
         uv pip install .
-    - name: Install extension
+    - name: show pytket
       run: |
         uv pip show pytket
+    - name: copy docs files
+      run: |
+        cp -R docs/pytket-docs-theming/_static docs
+        cp docs/pytket-docs-theming/conf.py docs
+        cp docs/pytket-docs-theming/pyproject.toml docs
+        cp docs/pytket-docs-theming/uv.lock docs      
     - name: Install docs dependencies
       run: |
         cd docs
