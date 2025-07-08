@@ -26,8 +26,6 @@ jobs:
       with:
         version: "0.4.20"
         enable-cache: true
-    - name: Install Python 3.12
-      run: uv python install 3.12
     - name: Setup dependencies
       run: |
         uv venv --python 3.12
