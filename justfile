@@ -7,16 +7,16 @@ prepare:
 PROJECT_NAME := `(basename $(pwd))`
 
 install: prepare
-    cd docs && uv sync && uv pip install ../.
+    cd docs && uv pip install .
 
 build *SPHINX_ARGS: install
-    cd docs && uv run sphinx-build {{SPHINX_ARGS}} -b html . build -D html_title={{PROJECT_NAME}}
+    cd docs && sphinx-build {{SPHINX_ARGS}} -b html . build -D html_title={{PROJECT_NAME}}
 
 linkcheck: install
-    cd docs && uv run sphinx-build -b linkcheck . build 
+    cd docs && sphinx-build -b linkcheck . build
 
 coverage: install
-    cd docs && uv run sphinx-build -v -b coverage . build/coverage 
+    cd docs && sphinx-build -v -b coverage . build/coverage
 
 build-strict: install
     just build -W # Fail on sphinx warnings
