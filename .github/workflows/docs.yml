@@ -46,10 +46,7 @@ jobs:
       run: |
         cd docs
         uv pip install .
-    - name: Build docs
-      timeout-minutes: 20
-      run: |
-        cd docs && sphinx-build -W -b html . build -D html_title=pytket-braket
+        sphinx-build -W -b html . build -D html_title=pytket-braket
     - name: Check links
       timeout-minutes: 20
       run: |
