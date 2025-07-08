@@ -29,7 +29,9 @@ jobs:
     - name: Install Python 3.12
       run: uv python install 3.12
     - name: Setup dependencies
-      run: uv venv --python 3.12
+      run: |
+        uv venv --python 3.12
+        .venv/bin/activate
     - name: Install extension
       run: |
         uv pip install .
@@ -46,7 +48,7 @@ jobs:
       run: |
         cd docs
         uv pip install .
-        uv run sphinx-build -W -b html . build -D html_title=pytket-braket
+        sphinx-build -W -b html . build -D html_title=pytket-braket
     - name: Check links
       timeout-minutes: 20
       run: |
