@@ -23,8 +23,8 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        pyver: ["3.10", "3.13"]
-    uses: CQCL/pytket-braket/.github/workflows/static-checks-wf.yml@infra/uv-and-workflows
+        pyver: ["3.12"]
+    uses: CQCL/pytket-braket/.github/workflows/static-checks-wf.yml@runci/melf-2025-07-08
     with:
       os: ${{ matrix.os }}
       pyver: ${{ matrix.pyver }}
@@ -35,7 +35,7 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         pyver: ["3.10", "3.13"]
-    uses: CQCL/pytket-braket/.github/workflows/unit-test-wf.yml@infra/uv-and-workflows
+    uses: CQCL/pytket-braket/.github/workflows/unit-test-wf.yml@runci/melf-2025-07-08
     with:
       os: ${{ matrix.os }}
       pyver: ${{ matrix.pyver }}

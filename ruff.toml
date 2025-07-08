@@ -1,10 +1,13 @@
 exclude = [
-    "docs/pytket-docs-theming",
-    "docs/examples/*"
+    "docs/pytket-docs-theming/*",
+    "docs/examples/*",
+    "docs/quantinuum-sphinx/*",
+    "docs/quantinuum-sphinx/_static/syncTheme.global.js",
+    "docs/quantinuum-sphinx/_static/injectNav.global.js",
 ]
 
 
-target-version = "py310"
+target-version = "py312"
 
 lint.select = [
     "A",

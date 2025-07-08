@@ -54,6 +54,6 @@ jobs:
           restore-keys: |
             ${{ steps.pre-commit-cache.outputs.result }}-
       - name: Run pre-commit
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: uv run pre-commit run --all-files --show-diff-on-failure
       - name: Type check with mypy
-        run: mypy --config-file=mypy.ini --no-incremental --explicit-package-bases pytket tests
+        run: uv run mypy --config-file=mypy.ini --no-incremental --explicit-package-bases pytket tests

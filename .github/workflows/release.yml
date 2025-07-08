@@ -12,7 +12,7 @@ on:
 jobs:
   build-and-publish:
     name: Build, test, and store artifact, and upload to pypi
-    uses: CQCL/pytket-braket/.github/workflows/release-wf.yml@infra/uv-and-workflows
+    uses: CQCL/pytket-braket/.github/workflows/release-wf.yml@runci/melf-2025-07-08
     with:
       pyver: "3.10"
       publish: ${{ github.event_name == 'release' }}
