@@ -1,7 +1,8 @@
 [project]
 name = "pytket-braket"
 dynamic = ["version"]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<4.0"
+
 description = "Extension for pytket, providing access to Amazon Braket backends"
 license = { file = "LICENSE" }
 readme = "README.md"
@@ -37,25 +38,25 @@ documentation = "https://tket.quantinuum.com/extensions/pytket-braket/index.html
 source = "https://github.com/CQCL/pytket-braket"
 tracker = "https://github.com/CQCL/pytket-braket/issues"
 
-[tool.setuptools.packages]
-find = {}
-
 [tool.setuptools.dynamic]
 version = {attr = "pytket.extensions.braket._metadata.__extension_version__"}
 
 [build-system]
-#requires = ["uv_build>=0.7.13,<0.8.0"]
-#build-backend = "uv_build"
+#requires = ["uv_build>=0.7.13,<0.8.0"] # todo remove this
+#build-backend = "uv_build" # todo remove this
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[tool.uv]
-dev-dependencies = [
-    "pytest >=8.3.2,<9",
-    "pytest-timeout ~=2.4.0",
-    "ruff >=0.6.2,<0.7",
-    "mypy >=1.11.1,<2",
-    "hypothesis >=6.111.1,<7",
-    "pre-commit >=3.8.0,<4",
-    "pyupgrade >=2.29,<4.0",
+[dependency-groups]
+dev  = [
+    "pytest >= 8.3.2, < 9",
+    "pytest-timeout ~= 2.4.0",
+    "ruff >= 0.6.2, < 0.7",
+    "mypy >= 1.11.1, < 2",
+    "hypothesis >= 6.111.1, < 7",
+    "pre-commit >= 3.8.0, < 4",
+    "pyupgrade >= 2.29, < 4.0",
+]
+examples = [
+    "jupyterlab>=4.4.2",
 ]

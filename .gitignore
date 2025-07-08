@@ -11,7 +11,10 @@ obj
 docs/extensions
 .ipynb_checkpoints
 .DS_Store
-docs/pyproject.toml
-docs/poetry.lock
 node_modules
 uv.lock
+docs/pyproject.toml
+docs/poetry.lock
+docs/uv.lock
+docs/conf.py
+docs/_static

@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - "wheel/**"
+      - "runci/**"
   release:
     types:
       - created
-      - edited
 
 jobs:
   build-and-publish:
