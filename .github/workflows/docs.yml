@@ -29,13 +29,6 @@ jobs:
     - name: Setup dependencies
       run: |
         uv venv --python 3.12
-        source .venv/bin/activate
-    - name: Install extension
-      run: |
-        uv pip install .
-    - name: show pytket
-      run: |
-        uv pip show pytket
     - name: copy docs files
       run: |
         cp -R docs/pytket-docs-theming/_static docs
@@ -48,7 +41,7 @@ jobs:
         uv pip install .
         cd docs
         uv pip install .
-        sphinx-build -b html . build -D html_title=pytket-braket
+        sphinx-build -b html . build -D html_title=pytket-braket # todo add fail on warnings
         # sphinx-build -b linkcheck . build
         # sphinx-build -v -b coverage . build/coverage 
     - uses: actions/upload-artifact@v4
