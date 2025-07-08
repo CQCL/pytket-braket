@@ -22,6 +22,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "myst_nb",
     "sphinxcontrib.googleanalytics",
+    "quantinuum_sphinx"
 ]
 
 nitpicky = True
@@ -94,10 +95,10 @@ myst_heading_anchors = 3
 
 html_theme_options = {}
 
-html_theme = "furo"
-templates_path = ["quantinuum-sphinx/_templates"]
-html_static_path = ["quantinuum-sphinx/_static", "_static"]
-html_favicon = "quantinuum-sphinx/_static/assets/quantinuum_favicon.svg"
+html_theme = "quantinuum_sphinx"
+templates_path = ["_templates"]
+html_static_path = ["_static"]
+html_favicon = "_static/assets/quantinuum_favicon.svg"
 
 
 pytketdoc_base = "https://docs.quantinuum.com/tket/"

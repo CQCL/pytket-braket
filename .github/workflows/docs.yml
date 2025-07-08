@@ -49,15 +49,15 @@ jobs:
     - name: Build docs
       timeout-minutes: 20
       run: |
-        cd docs && uv run sphinx-build -W -b html . build -D html_title=pytket-braket
+        cd docs && sphinx-build -W -b html . build -D html_title=pytket-braket
     - name: Check links
       timeout-minutes: 20
       run: |
-        cd docs && uv run sphinx-build -b linkcheck . build
+        cd docs && sphinx-build -b linkcheck . build
     - name: Check coverage
       timeout-minutes: 20
       run: |
-        cd docs && uv run sphinx-build -v -b coverage . build/coverage 
+        cd docs && sphinx-build -v -b coverage . build/coverage 
     - uses: actions/upload-artifact@v4
       with:
         name: docs
