@@ -3,6 +3,14 @@
 Changelog
 ~~~~~~~~~
 
+0.43.0 (July 2025)
+------------------
+
+* Add `cc_prx` and `measure_ff` to dictionary of recognized gates.
+* Support PRx (OpType.PhasedX) in conversion functions.
+* Update pytket minimum version requirement to 2.7.0.
+* Update minimum versions of braket dependencies.
+
 0.42.0 (June 2025)
 ------------------
 
