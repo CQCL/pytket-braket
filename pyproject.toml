@@ -26,7 +26,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "pytket >= 2.6.0",
+    "pytket >= 2.7.0",
     "amazon-braket-sdk ~= 1.53",
     "amazon-braket-schemas ~= 1.23",
     "amazon-braket-default-simulator ~= 1.20",
