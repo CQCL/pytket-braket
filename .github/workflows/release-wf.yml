@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      pyver:
+        description: "Python version to build on"
+        required: true
+        type: string
+      publish:
+        description: "Whether to push wheels to pypi after building them"
+        required: true
+        type: bool
+    secrets:
+      PYPI_API_TOKEN:
+        description: "The token used to upload wheels to pypi"
+        required: true
+
+jobs:
+  build-release:
+    name: Build, test and store artifact
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/* +refs/heads/*:refs/remotes/origin/*
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.20"
+          enable-cache: true
+      - name: Install Python ${{ inputs.pyver }}
+        run: uv python install ${{ inputs.pyver }}
+      - name: Setup dependencies
+        run: uv sync --python ${{ inputs.pyver }}
+      - name: Run pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+      - name: Type check with mypy
+        run: uv run mypy --config-file=mypy.ini --no-incremental --explicit-package-bases pytket tests
+      - name: Pytest
+        run: uv run pytest
+      - name: Build wheels for distribution
+        run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: dist/
+
+  publish_to_pypi:
+    name: Publish to pypi
+    if: ${{ inputs.publish }}
+    needs: braket-checks
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Download wheel
+        uses: actions/download-artifact@v4
+        with:
+          path: wheelhouse
+          pattern: wheel
+      - name: Put it in the dist folder
+        run: |
+          mkdir dist
+          for w in `find wheelhouse/ -type f -name "*.whl"` ; do cp $w dist/ ; done
+      - name: Publish wheel
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: "password"
+          verbose: true
