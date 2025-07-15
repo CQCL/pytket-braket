@@ -1,4 +1,4 @@
-name: Static checks (linting, mypy, and docs)
+name: Static checks (linting, mypy)
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   static-checks:
-    name: Static checks (linting, mypy, and docs)
+    name: Static checks (linting, mypy)
     runs-on: ${{ inputs.os }}
     steps:
       - name: Check out the repository

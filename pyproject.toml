@@ -45,8 +45,6 @@ find = {}
 version = {attr = "pytket.extensions.braket._metadata.__extension_version__"}
 
 [build-system]
-#requires = ["uv_build>=0.7.13,<0.8.0"] # todo remove this
-#build-backend = "uv_build" # todo remove this
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
