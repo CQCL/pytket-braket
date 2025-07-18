@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      extname:
+        description: "Extension name"
+        required: true
+        type: string
+
+jobs:
+  docs-checks:
+    name: Run doc build and create artifact
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+          submodules: true
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.20"
+          enable-cache: true
+      - name: Setup dependencies
+        run: |
+          uv venv --python 3.12
+      - name: copy docs files
+        run: |
+          cp -R docs/pytket-docs-theming/_static docs
+          cp docs/pytket-docs-theming/conf.py docs
+          cp docs/pytket-docs-theming/pyproject.toml docs
+          cp docs/pytket-docs-theming/uv.lock docs
+      - name: Install docs dependencies
+        run: |
+          source .venv/bin/activate
+          uv pip install .
+          cd docs
+          uv pip install .
+          sphinx-build -W -b html . build -D html_title=${{ inputs.extname }}
+          sphinx-build -b linkcheck . build
+          sphinx-build -v -b coverage . build/coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs
+          path: docs/build/

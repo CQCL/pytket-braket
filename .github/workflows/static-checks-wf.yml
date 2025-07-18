@@ -1,0 +1,59 @@
+name: Static checks (linting, mypy)
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: "Operating System to build on"
+        required: true
+        type: string
+      pyver:
+        description: "Python version to build on"
+        required: true
+        type: string
+
+jobs:
+  static-checks:
+    name: Static checks (linting, mypy)
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+          submodules: recursive
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.4.20"
+          enable-cache: true
+      - name: Install Python ${{ inputs.pyver }}
+        run: uv python install ${{ inputs.pyver }}
+      - name: Setup dependencies
+        run: uv sync --python ${{ inputs.pyver }}
+      - name: Compute pre-commit cache key
+        id: pre-commit-cache
+        shell: python
+        run: |
+          import hashlib
+          import sys
+          import os
+
+          python = "py{}.{}".format(*sys.version_info[:2])
+          payload = sys.version.encode() + sys.executable.encode()
+          digest = hashlib.sha256(payload).hexdigest()
+          result = "${{ runner.os }}-{}-{}-pre-commit".format(python, digest[:8])
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
+              github_output.write(f"result={result}")
+      - name: Restore pre-commit cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ steps.pre-commit-cache.outputs.result }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ steps.pre-commit-cache.outputs.result }}-
+      - name: Run pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+      - name: Type check with mypy
+        run: uv run mypy --config-file=mypy.ini --no-incremental --explicit-package-bases pytket tests
