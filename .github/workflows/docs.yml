@@ -15,6 +15,6 @@ on:
 jobs:
   check-docs:
     name: Build docs and create artefact
-    uses: CQCL/pytket-braket/.github/workflows/docs-wf.yml@infra/uv-and-workflows
+    uses: CQCL/pytket-workflows/ci-workflows/docs-wf.yml@main
     with:
       extname: "pytket-braket"
