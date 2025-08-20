@@ -3,7 +3,7 @@
 Changelog
 ~~~~~~~~~
 
-0.44.0rc0 (August 2025)
+0.44.0rc1 (August 2025)
 -----------------------
 
 * Clean up CI
