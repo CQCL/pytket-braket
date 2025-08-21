@@ -6,7 +6,7 @@ API documentation
 .. automodule:: pytket.extensions.braket.backends
 .. automodule:: pytket.extensions.braket._metadata
 .. automodule:: pytket.extensions.braket.backends.braket
-   
+
    .. autoclass:: BraketBackend
       :members:
 
