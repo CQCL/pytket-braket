@@ -3,10 +3,10 @@
 Changelog
 ~~~~~~~~~
 
-0.44.0rc2 (August 2025)
------------------------
+0.44.0 (August 2025)
+--------------------
 
-* Clean up CI
+* Update pytket minimum version requirement to 2.9.1.
 
 0.43.0 (July 2025)
 ------------------
