@@ -23,7 +23,14 @@ from typing import (
 from numpy import pi
 
 from braket.circuits import Circuit as BK_Circuit  # type: ignore
-from pytket.circuit import Circuit, OpType, Qubit
+from pytket.circuit import (
+    Circuit,
+    OpType,
+    Qubit,
+    Unitary1qBox,
+    Unitary2qBox,
+    Unitary3qBox,
+)
 
 if TYPE_CHECKING:
     from pytket.circuit import Node
@@ -159,6 +166,8 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
             bkcirc.prx(
                 *qbs, _normalize_angle(params[0]) * pi, _normalize_angle(params[1]) * pi
             )
+        elif optype in {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}:
+            bkcirc.unitary(matrix=op.get_matrix(), targets=qbs)
         elif optype == OpType.Measure:
             # Not wanted by braket, but must be tracked for final conversion of results.
             measures[qbs[0]] = cbs[0]
@@ -240,6 +249,17 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:  # noqa: PLR0912, PLR0915
             tkcirc.add_gate(OpType.Z, qbs)
         elif opname == "ZZ":
             tkcirc.add_gate(OpType.ZZPhase, op.angle / pi, qbs)
+        elif opname == "Unitary":
+            if len(instr.target) == 1:
+                tkcirc.add_unitary1qbox(Unitary1qBox(op.to_matrix()), *qbs)
+            elif len(instr.target) == 2:
+                tkcirc.add_unitary2qbox(Unitary2qBox(op.to_matrix()), *qbs)
+            elif len(instr.target) == 3:
+                tkcirc.add_unitary3qbox(Unitary3qBox(op.to_matrix()), *qbs)
+            else:
+                raise NotImplementedError(
+                    f"Cannot convert {len(instr.target)} qubits unitary gate to tket"
+                )
         else:
             # The following don't have direct equivalents:
             # - CCPrx: classically controlled PhasedX.
