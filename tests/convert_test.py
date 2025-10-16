@@ -16,7 +16,7 @@ import pytest
 
 from pytket.circuit import Circuit, OpType, Unitary1qBox, Unitary2qBox, Unitary3qBox
 from pytket.extensions.braket import braket_to_tk, tk_to_braket
-import numpy as np
+import numpy
 
 
 def test_convert() -> None:
@@ -48,17 +48,17 @@ def test_convert() -> None:
     c.add_gate(OpType.Z, [0])
     c.add_gate(OpType.ZZPhase, 0.9, [0, 1])
     c.add_gate(OpType.PhasedX, [0.1, 0.2], [0])
-    c.add_unitary1qbox(Unitary1qBox(np.array([[0, 1j], [1, 0]])), 1)
+    c.add_unitary1qbox(Unitary1qBox(numpy.array([[0, 1j], [1, 0]])), 1)
     c.add_unitary2qbox(
         Unitary2qBox(
-            np.array([[1, 0, 0, 0], [0, 1j, 0, 0], [0, 0, 0, 1j], [0, 0, 1j, 0]])
+            numpy.array([[1, 0, 0, 0], [0, 1j, 0, 0], [0, 0, 0, 1j], [0, 0, 1j, 0]])
         ),
         1,
         2,
     )
     c.add_unitary3qbox(
         Unitary3qBox(
-            np.array(
+            numpy.array(
                 [
                     [1, 0, 0, 0, 0, 0, 0, 0],
                     [0, 1j, 0, 0, 0, 0, 0, 0],
