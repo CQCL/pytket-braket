@@ -257,9 +257,9 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:  # noqa: PLR0912, PLR0915
         elif opname == "Unitary":
             if len(instr.target) == 1:
                 tkcirc.add_unitary1qbox(Unitary1qBox(op.to_matrix()), *qbs)
-            elif len(instr.target) == 2:
+            elif len(instr.target) == 2:  # noqa: PLR2004
                 tkcirc.add_unitary2qbox(Unitary2qBox(op.to_matrix()), *qbs)
-            elif len(instr.target) == 3:
+            elif len(instr.target) == 3:  # noqa: PLR2004
                 tkcirc.add_unitary3qbox(Unitary3qBox(op.to_matrix()), *qbs)
             else:
                 raise NotImplementedError(
