@@ -44,10 +44,10 @@ setup(
     packages=find_namespace_packages(include=["pytket.*"]),
     include_package_data=True,
     install_requires=[
-        "pytket >= 2.9.1",
-        "amazon-braket-sdk ~= 1.95",
-        "amazon-braket-schemas ~= 1.24",
-        "amazon-braket-default-simulator ~= 1.26",
+        "pytket >= 2.9.3",
+        "amazon-braket-sdk ~= 1.101",
+        "amazon-braket-schemas ~= 1.26",
+        "amazon-braket-default-simulator ~= 1.29",
         "boto3-stubs",
     ],
     classifiers=[
