@@ -3,7 +3,7 @@
 Changelog
 ~~~~~~~~~
 
-0.45.0 (Oxtober 2025)
+0.45.0 (October 2025)
 ---------------------
 
 * Support 'Unitary1qBox', 'Unitary2qBox', and 'Unitary3qBox' in conversion functions.
