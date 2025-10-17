@@ -172,7 +172,7 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
                 *qbs, _normalize_angle(params[0]) * pi, _normalize_angle(params[1]) * pi
             )
         elif optype in {OpType.Unitary1qBox, OpType.Unitary2qBox, OpType.Unitary3qBox}:
-            bkcirc.unitary(matrix=op.get_matrix(), targets=qbs)
+            bkcirc.unitary(matrix=op.get_unitary(), targets=qbs)
         elif optype == OpType.Measure:
             # Not wanted by braket, but must be tracked for final conversion of results.
             measures[qbs[0]] = cbs[0]
