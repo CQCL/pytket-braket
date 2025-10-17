@@ -14,9 +14,7 @@
 
 import numpy as np
 import pytest
-
 from pytket.circuit import Circuit, OpType, Unitary1qBox, Unitary2qBox, Unitary3qBox
-from pytket.circuit import Circuit, OpType
 
 from pytket.extensions.braket import braket_to_tk, tk_to_braket
 
