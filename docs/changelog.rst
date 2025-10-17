@@ -6,7 +6,7 @@ Changelog
 Unreleased
 ----------
 
-* Support 'Unitary1qBox'PRx, 'Unitary2qBox', and 'Unitary3qBox' in conversion functions.
+* Support 'Unitary1qBox', 'Unitary2qBox', and 'Unitary3qBox' in conversion functions.
 
 0.44.0 (August 2025)
 --------------------
