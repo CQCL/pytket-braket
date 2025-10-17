@@ -27,18 +27,6 @@ from uuid import uuid4
 
 import boto3
 import numpy as np
-
-import braket  # type: ignore
-import braket.circuits  # type: ignore
-from braket.aws import AwsDevice, AwsSession  # type: ignore
-from braket.aws.aws_device import AwsDeviceType  # type: ignore
-from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
-from braket.circuits.observable import Observable  # type: ignore
-from braket.circuits.qubit_set import QubitSet  # type: ignore
-from braket.circuits.result_type import ResultType  # type: ignore
-from braket.device_schema import DeviceActionType  # type: ignore
-from braket.devices import LocalSimulator  # type: ignore
-from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
 from pytket.architecture import Architecture, FullyConnected
 from pytket.backends import Backend, CircuitStatus, ResultHandle, StatusEnum
 from pytket.backends.backend import KwargTypes
@@ -48,10 +36,6 @@ from pytket.backends.backendresult import BackendResult
 from pytket.backends.resulthandle import _ResultIdTuple
 from pytket.circuit import Circuit, OpType
 from pytket.extensions.braket._metadata import __extension_version__
-from pytket.extensions.braket.braket_convert import (
-    get_avg_characterisation,
-    tk_to_braket,
-)
 from pytket.passes import (
     AutoRebase,
     AutoSquash,
@@ -84,6 +68,22 @@ from pytket.predicates import (
 from pytket.utils import prepare_circuit
 from pytket.utils.operators import QubitPauliOperator
 from pytket.utils.outcomearray import OutcomeArray
+
+import braket  # type: ignore
+import braket.circuits  # type: ignore
+from braket.aws import AwsDevice, AwsSession  # type: ignore
+from braket.aws.aws_device import AwsDeviceType  # type: ignore
+from braket.aws.aws_quantum_task import AwsQuantumTask  # type: ignore
+from braket.circuits.observable import Observable  # type: ignore
+from braket.circuits.qubit_set import QubitSet  # type: ignore
+from braket.circuits.result_type import ResultType  # type: ignore
+from braket.device_schema import DeviceActionType  # type: ignore
+from braket.devices import LocalSimulator  # type: ignore
+from braket.tasks.local_quantum_task import LocalQuantumTask  # type: ignore
+from pytket.extensions.braket.braket_convert import (
+    get_avg_characterisation,
+    tk_to_braket,
+)
 
 from .config import BraketConfig
 

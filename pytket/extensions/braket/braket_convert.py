@@ -21,6 +21,7 @@ from typing import (
 )
 
 from numpy import pi
+from pytket.circuit import Circuit, OpType, Qubit
 
 from braket.circuits import Circuit as BK_Circuit  # type: ignore
 from pytket.circuit import (
