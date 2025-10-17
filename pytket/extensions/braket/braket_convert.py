@@ -88,11 +88,7 @@ def tk_to_braket(  # noqa: PLR0912, PLR0915
         optype = op.type
         if optype == OpType.Barrier:
             continue
-        if optype not in {
-            OpType.Unitary1qBox,
-            OpType.Unitary2qBox,
-            OpType.Unitary3qBox,
-        }:
+        if op.is_gate():
             params = op.params
         if optype == OpType.CCX:
             bkcirc.ccnot(*qbs)
