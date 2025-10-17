@@ -251,15 +251,16 @@ def braket_to_tk(bkcirc: BK_Circuit) -> Circuit:  # noqa: PLR0912, PLR0915
         elif opname == "ZZ":
             tkcirc.add_gate(OpType.ZZPhase, op.angle / pi, qbs)
         elif opname == "Unitary":
-            if len(instr.target) == 1:
+            n_qb = len(instr.target)
+            if n_qb == 1:
                 tkcirc.add_unitary1qbox(Unitary1qBox(op.to_matrix()), *qbs)
-            elif len(instr.target) == 2:  # noqa: PLR2004
+            elif n_qb == 2:  # noqa: PLR2004
                 tkcirc.add_unitary2qbox(Unitary2qBox(op.to_matrix()), *qbs)
-            elif len(instr.target) == 3:  # noqa: PLR2004
+            elif n_qb == 3:  # noqa: PLR2004
                 tkcirc.add_unitary3qbox(Unitary3qBox(op.to_matrix()), *qbs)
             else:
                 raise NotImplementedError(
-                    f"Cannot convert {len(instr.target)} qubits unitary gate to tket"
+                    f"Cannot convert {n_qb}-qubit unitary gate to tket"
                 )
         else:
             # The following don't have direct equivalents:
