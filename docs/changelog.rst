@@ -3,10 +3,11 @@
 Changelog
 ~~~~~~~~~
 
-Unreleased
-----------
+0.45.0 (Oxtober 2025)
+---------------------
 
 * Support 'Unitary1qBox', 'Unitary2qBox', and 'Unitary3qBox' in conversion functions.
+* Update pytket minimum version requirement to 2.10.1.
 
 0.44.0 (August 2025)
 --------------------
