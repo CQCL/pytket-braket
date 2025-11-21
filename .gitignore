@@ -14,3 +14,6 @@ pytket/extensions/braket/_metadata.py
 .DS_Store
 docs/pyproject.toml
 docs/poetry.lock
+docs/uv.lock
+docs/conf.py
+docs/_static
